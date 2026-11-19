@@ -58,3 +58,16 @@ El módulo `src/agents/admin-analyst.js` calcula métricas deterministas a parti
 - Inventario en o por debajo del mínimo configurado.
 
 El proveedor debe inyectar `getSnapshot(range)` y conectarse a una API administrativa autenticada de solo lectura. Actualmente no hay proveedor configurado: el módulo de cálculo y sus pruebas existen, pero no consulta ventas, pagos, reservas privadas ni inventario reales. Los montos deben llegar como enteros en COP; el resumen no calcula utilidad, impuestos ni costos.
+
+
+## Planificador conservador de disponibilidad
+El subagente `supervisorWebAgenda.planAvailability({ from, to, packageType, players })` combina la consulta pública con el planificador puro `src/agents/availability-planner.js`. Reconoce paquetes `standard` (60 min), `tactical` (90 min) y `elite` (120 min), reservas normales de 2 a 10 jugadores, inicios cada 30 minutos, horario base 08:00–23:00 y margen de limpieza de 30 minutos. Lee intervalos explícitos en las listas `busy`, `disabled` y `blocked`; si la API no devuelve un contrato reconocible, responde `unverified` y no genera horarios.
+
+Comando del dueño por WhatsApp:
+```
+DISPONIBILIDAD: 2026-11-20
+DISPONIBILIDAD: 2026-11-20 tactical 4
+```
+El resultado son candidatos calculados, no reservas bloqueadas ni confirmadas. La API pública documentada es de solo lectura, por lo que la disponibilidad puede cambiar antes de completar la reserva. No usar esta salida como promesa al cliente ni para marcar ventas.
+
+**Pendiente de validación externa:** el documento funcional describe los nombres de las listas de bloqueos, pero no proporciona un ejemplo íntegro de cada objeto. El planificador acepta alias explícitos comunes para inicio/fin y falla cerrado ante campos ausentes, fechas inválidas o estructura desconocida. Antes de habilitar en producción, contrastar con una respuesta real anonimizada del endpoint y probar cierres especiales, partidas abiertas, zonas horarias y reservas que cruzan medianoche.
