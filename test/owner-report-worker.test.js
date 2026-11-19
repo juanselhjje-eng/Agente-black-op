@@ -9,7 +9,7 @@ test("programa el reporte diario en la hora local configurada", () => {
 
 test("programa el semanal los lunes sin confundir la fecha UTC y recupera arranques tardíos", () => {
   const due = getDueOwnerReports(new Date("2026-11-23T13:15:00.000Z"), { timeZone: "America/Bogota", dailyTime: "08:00", weeklyTime: "08:15" });
-  assert.deepEqual(due.map(item => item.key), ["weekly:2026-11-23"]);
+  assert.deepEqual(due.map(item => item.key), ["daily:2026-11-23", "weekly:2026-11-23"]);
   const late = getDueOwnerReports(new Date("2026-11-23T15:00:00.000Z"), { timeZone: "America/Bogota", dailyTime: "08:00", weeklyTime: "08:15" });
   assert.deepEqual(late.map(item => item.key), ["daily:2026-11-23", "weekly:2026-11-23"]);
 });
