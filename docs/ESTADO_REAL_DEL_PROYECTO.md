@@ -50,7 +50,8 @@ El proyecto tiene una base técnica útil, pero la mayor parte de las funciones 
 - Investigador web con Gemini Google Search grounding, extracción/deduplicación de fuentes HTTPS y comando del dueño `INVESTIGAR:`.
 - Analista administrativo determinista para snapshots normalizados: reservas por estado, pagos reportados, recaudos confirmados y reembolsos separados; protege sumas COP contra desbordamiento e inventario bajo mínimo; sin fuente privada conectada.
 - Planificador conservador de disponibilidad pública con paquetes, jugadores, bloqueos, márgenes de limpieza y parser validado del comando del dueño; no confirma ni bloquea reservas.
-- Auditor general determinista, con resumen de eventos, hallazgos operativos y protección contra exposición de mensajes/teléfonos; comando `AUDITORIA`.\n- Planificador de marketing fundamentado con investigación previa, calendario de hasta siete piezas y borradores de captions/CTA/briefs visuales; comando `MARKETING:` sin publicación automática.
+- Auditor general determinista, con resumen de eventos, hallazgos operativos y protección contra exposición de mensajes/teléfonos; comando `AUDITORIA`.
+- Planificador de marketing fundamentado con investigación previa, calendario de hasta siete piezas y borradores de captions/CTA/briefs visuales; comando `MARKETING:` sin publicación automática.
 - Dockerfile, Compose, CI y documentación inicial.
 - Pruebas automatizadas ejecutadas por GitHub Actions; esto no sustituye pruebas de integración contra Meta, Gemini, PostgreSQL real ni el sitio de reservas.
 
