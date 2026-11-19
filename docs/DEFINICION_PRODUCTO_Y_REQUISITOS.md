@@ -152,6 +152,22 @@ Consideraciones técnicas:
 - **Instagram Graph API:** integración posterior, únicamente con permisos, activos y revisión/configuración oficial aplicable.
 - **Panel administrativo:** opcional. El proyecto puede funcionar sin interfaz web de clientes; un panel interno sería útil para revisar casos, estado de agentes y auditoría.
 
+### Despliegue objetivo: Windows Server
+
+El despliegue previsto será en un servidor Windows. Antes de preparar comandos definitivos hay que confirmar la edición/versión exacta (por ejemplo, Windows Server 2019, 2022 o 2025) y si se dispone de permisos de administrador.
+
+Preparación propuesta:
+1. Instalar Git for Windows y Node.js LTS compatible con el SDK de Gemini. Se recomienda administrar versiones con nvm-windows o instalar el MSI oficial de Node.js; validar `node -v` y `npm -v`.
+2. Clonar el repositorio en una carpeta de servicio, por ejemplo `C:\\Apps\\Agente-black-op`.
+3. Configurar variables secretas fuera del repositorio (por ejemplo `GEMINI_API_KEY`, `GEMINI_MODEL`, credenciales/token de WhatsApp, URL/credenciales de base de datos y claves de APIs). No guardar secretos en Git.
+4. Ejecutar la aplicación Node.js como servicio persistente de Windows, con inicio automático, recuperación ante fallos y logs rotados. Elegir y documentar el gestor de servicios antes de producción (por ejemplo, WinSW o NSSM, evaluando mantenimiento y seguridad).
+5. Publicar el webhook bajo un dominio/subdominio con HTTPS válido. Puede utilizarse IIS como proxy inverso hacia el puerto local de Node.js; configurar URL Rewrite y Application Request Routing (ARR), o elegir otro proxy inverso administrado.
+6. Abrir en firewall únicamente los puertos necesarios. El puerto interno de Node.js no debe quedar expuesto directamente si el proxy inverso publica HTTPS.
+7. Configurar monitoreo, sincronización horaria, copias de seguridad, actualización controlada y alertas del proceso.
+8. Probar el webhook de verificación y recepción de WhatsApp, respuestas salientes, reinicio del servidor, reconexión tras fallos, tarea de timeout de 2 minutos e informes programados.
+
+No desplegar producción hasta verificar dominio, HTTPS, reglas de firewall, servicio persistente, secretos y recuperación ante reinicios.
+
 ### ¿Hace falta una página web?
 No hace falta crear una página web propia para que los clientes conversen con el agente si el canal será exclusivamente WhatsApp.
 
