@@ -9,6 +9,7 @@ import { createStore } from "./storage/json-store.js";
 import { createPostgresStore } from "./storage/postgres-store.js";
 import { startEscalationWorker } from "./workers/escalation-worker.js";
 import { startWebsiteMonitorWorker } from "./workers/website-monitor-worker.js";
+import { startOwnerReportWorker } from "./workers/owner-report-worker.js";
 
 const app = express();
 const store = config.databaseUrl
@@ -84,12 +85,14 @@ const server = app.listen(config.port, config.host, () => {
 });
 const stopEscalationWorker = startEscalationWorker({ store, whatsapp, config });
 const stopWebsiteMonitor = startWebsiteMonitorWorker({ monitor: websiteMonitor, store, whatsapp, config });
+const ownerReportWorker = startOwnerReportWorker({ store, whatsapp, config });
 let shuttingDown = false;
 const shutdown = () => {
   if (shuttingDown) return;
   shuttingDown = true;
   stopEscalationWorker();
   stopWebsiteMonitor();
+  ownerReportWorker.stop();
   server.close(async () => {
     try { await store.close?.(); }
     catch (error) { console.error("Error cerrando almacenamiento:", error); }
