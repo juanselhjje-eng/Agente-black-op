@@ -18,3 +18,13 @@ RESPONDER <UUID_DE_LA_CONSULTA>: texto de respuesta
 ```
 
 Si la consulta sigue pendiente, el Secretario la marca como respondida y reenvía el texto al cliente. Si venció o ya fue respondida, informa al dueño que no está pendiente. Este flujo necesita que la integración de WhatsApp esté configurada y que el número del dueño esté autorizado.
+
+
+## Memoria del dueño
+El Secretario recibe mensajes del dueño únicamente desde el número configurado y autenticado. Puede guardar instrucciones y preferencias para futuras respuestas:
+- Mensaje natural: "Quiero que cuando un cliente pregunte por X, le expliques primero Y". Gemini identifica si es una regla estable, la resume fielmente y la guarda.
+- Guardado explícito: `APRENDER: regla que debe recordar`.
+- Consultar: `MEMORIAS`.
+- Desactivar: `OLVIDAR MEMORIA ID_CORTO`.
+
+Las guías se cargan antes de cada respuesta a clientes. Nunca pueden prevalecer sobre seguridad, privacidad ni hechos verificados. El almacenamiento JSON es temporal de desarrollo; migrar a base de datos gestionada antes de producción.
