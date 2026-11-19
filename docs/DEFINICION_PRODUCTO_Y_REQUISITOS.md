@@ -132,14 +132,20 @@ Consideraciones técnicas:
 - **Panel administrativo:** opcional. El proyecto puede funcionar sin interfaz web de clientes; un panel interno sería útil para revisar casos, estado de agentes y auditoría.
 
 ### ¿Hace falta una página web?
-No hace falta crear una página web para que los clientes conversen con el agente si el canal será exclusivamente WhatsApp. Sin embargo, el negocio ya tiene una página de reservas citada en el PDF y una API pública. La falta de una nueva web para el chatbot no elimina la integración con la página de reservas existente.
+No hace falta crear una página web propia para que los clientes conversen con el agente si el canal será exclusivamente WhatsApp.
+
+**Discrepancia que debe aclararse:** la indicación más reciente del proyecto dice que la página web aún no se ha creado, pero el PDF referencia una URL de reservas (`https://blackops.visualdigital.workers.dev`) y un endpoint Supabase que describe como configuración real de la página. Hay que confirmar si esa URL corresponde a un prototipo, una demo, un entorno temporal o una página operativa. Hasta confirmarlo, tratar la URL y la API como referencias documentales pendientes de validación, no como una integración garantizada ni como dependencia de producción.
+
+El chatbot de WhatsApp puede construirse y probarse sin una web pública. Puede comenzar con la base de conocimiento aprobada y, cuando el negocio confirme el estado de la página y entregue los accesos, integrar las consultas que estén autorizadas.
 
 ### Flujo técnico general
 WhatsApp webhook → validación del evento → Orquestador → Atención WhatsApp/otro agente → fuentes autorizadas y herramientas → Revisor → respuesta WhatsApp.  
 Para casos sin respuesta: Orquestador → Secretario del dueño → espera persistente de 2 minutos → respuesta del dueño o cierre por timeout.  
 Los eventos, acciones y resultados → Auditor general.
 
-## 6. Integración conocida de la página (según PDF)
+## 6. Integración referenciada en el PDF (pendiente de validar)
+
+El PDF documenta este endpoint como API pública de la página. **Su vigencia y disponibilidad deben verificarse con el cliente antes de integrarlo.**
 
 Endpoint base: `https://yxldniscfjmzuvikgwaf.supabase.co/functions/v1/api`  
 Método: POST; encabezado `Content-Type: application/json`.
