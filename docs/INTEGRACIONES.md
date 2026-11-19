@@ -54,7 +54,7 @@ La respuesta incluye resumen y enlaces HTTPS que Gemini devuelve como fuentes de
 El módulo `src/agents/admin-analyst.js` calcula métricas deterministas a partir de un snapshot normalizado:
 - Reservas por estado conocido.
 - Pagos reportados no verificados separados de pagos confirmados.
-- Ingresos solo con estado de pago verificado y campo `verifiedAt`.
+- Recaudos confirmados solo con estado `verified`, `paid` o `approved` y `verifiedAt` válido.\n- Reembolsos con `refundedAt` se muestran por separado y nunca se suman como recaudo.\n- Se evita desbordamiento al sumar importes COP; montos que excederían el entero seguro se excluyen y se cuentan como anomalía.
 - Inventario en o por debajo del mínimo configurado.
 
 El proveedor debe inyectar `getSnapshot(range)` y conectarse a una API administrativa autenticada de solo lectura. Actualmente no hay proveedor configurado: el módulo de cálculo y sus pruebas existen, pero no consulta ventas, pagos, reservas privadas ni inventario reales. Los montos deben llegar como enteros en COP; el resumen no calcula utilidad, impuestos ni costos.
