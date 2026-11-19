@@ -114,6 +114,38 @@ export function createSecretary({ config, store, whatsapp }) {
       }
       return;
     }
+    if (/^MARKETING\\s*:/i.test(text)) {
+      const brief = text.replace(/^MARKETING\\s*:/i, "").trim();
+      if (!brief) {
+        await whatsapp.sendText(message.from, "Después de MARKETING: describe qué quieres lograr, por ejemplo: atraer grupos, aumentar consultas o mostrar la experiencia.");
+        return;
+      }
+      try {
+        const plan = await subagents.planificadorMarketing.createCalendar(brief);
+        if (plan.status !== "draft") {
+          await whatsapp.sendText(message.from, plan.message || "El planificador de marketing no está disponible.");
+        } else {
+          const posts = plan.posts.map((post,index) => [
+            (index+1) + ". " + post.day + " — " + post.format.toUpperCase() + " / " + post.objective,
+            "Gancho: " + post.hook,
+            "Concepto: " + post.concept,
+            "Caption: " + post.caption,
+            "CTA: " + post.callToAction,
+            "Visual: " + post.visualBrief,
+            "Métrica: " + post.metric,
+            "Base: " + post.evidence
+          ].join("\\n")).join("\\n\\n");
+          const sources = (plan.sources || []).map((source,index)=>(index+1)+". "+source.title+"\\n"+source.url).join("\\n");
+          const response = ["BORRADOR DE MARKETING — NO PUBLICADO", plan.campaign, "Audiencia: "+plan.audience, "Enfoque: "+plan.strategicAngle, posts, sources ? "FUENTES DE INVESTIGACIÓN:\\n"+sources : "Sin fuentes verificables; las propuestas son ideas creativas.", plan.safeguards.join("\\n")].filter(Boolean).join("\\n\\n").slice(0,6000);
+          await whatsapp.sendText(message.from,response);
+        }
+        await store.audit({ type:"owner_marketing_calendar_created", brief:brief.slice(0,300), status:plan.status, postCount:plan.posts?.length || 0, sourceCount:plan.sources?.length || 0 });
+      } catch (error) {
+        await whatsapp.sendText(message.from,"No pude crear el calendario: "+String(error?.message || "error").slice(0,220));
+        await store.audit({ type:"owner_marketing_calendar_failed", reason:String(error?.message || "unknown").slice(0,220) });
+      }
+      return;
+    }
     if (/^ESTADO WEB$/i.test(text)) {
       const latest = await store.getLatestWebsiteCheck();
       if (!latest) {
