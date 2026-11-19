@@ -142,7 +142,8 @@ Consideraciones técnicas:
 
 ### Componentes
 - **WhatsApp Business Platform / Cloud API:** entrada de mensajes por webhook y envío de respuestas. Requiere número, cuenta de Meta Business, aplicación, token y configuración de webhook.
-- **Node.js + JavaScript:** servidor, webhooks, lógica conversacional, orquestación y módulos de agentes.
+- **Servidor propio/VPS (por confirmar proveedor y sistema operativo):** alojará la aplicación Node.js, los webhooks, los módulos de agentes y el worker/scheduler. El proceso debe mantenerse disponible para recibir mensajes y ejecutar tareas programadas.
+- **Node.js + JavaScript:** servidor HTTP, webhooks, lógica conversacional, orquestación y módulos de agentes.
 - **Gemini API:** motor de IA para interpretación, clasificación, generación, análisis y coordinación de tareas. En Node.js se recomienda el SDK oficial `@google/genai`; la integración debe usar la API y el modelo configurados para el proyecto. Gemini puede solicitar herramientas mediante function calling, pero Node.js valida permisos, ejecuta cada función y devuelve resultados al modelo. La salida del modelo debe estar limitada por fuentes y herramientas autorizadas.
 - **Base de datos:** negocio/configuración, conversaciones, casos pendientes, reservas consultadas, tareas, logs y auditoría. El PDF menciona Supabase; confirmar si se reutilizará el proyecto Supabase existente.
 - **Cola/worker y scheduler:** vencimiento de 2 minutos, tareas periódicas, resúmenes y vigilancia. Puede implementarse con un worker persistente/cola compatible con el hosting.
@@ -246,7 +247,9 @@ Si la página todavía no está construida, estos módulos deben contemplarse de
 - Más integraciones o automatizaciones únicamente con interfaces autorizadas y alcance acordado.
 
 ## 8. Requisitos no funcionales y controles
-- Secretos en variables de entorno/gestor de secretos; nunca commitearlos.
+- Despliegue en servidor: ejecutar Node.js como servicio persistente (por ejemplo, systemd o un gestor de procesos equivalente), configurar reinicio automático, logs y monitoreo.
+- Configurar HTTPS y dominio/subdominio para el webhook de WhatsApp, DNS y firewall con solo los puertos necesarios.
+- Secretos en variables de entorno/gestor de secretos del servidor; nunca commitearlos ni incluirlos en imágenes/logs.
 - Validación de firma/autenticidad de webhooks y control de acceso del dueño.
 - Idempotencia para no responder dos veces al mismo evento.
 - Límites de tasa, reintentos y manejo de fallos de WhatsApp/Gemini/API.
@@ -265,7 +268,7 @@ Si la página todavía no está construida, estos módulos deben contemplarse de
 2. ¿Cuál es el número de WhatsApp del dueño para recibir escalaciones y reportes? ¿Es distinto del número público 311 334 8774?
 3. ¿Cómo contestará el dueño la consulta: texto libre, comando con ID o botón/respuesta estructurada?
 4. ¿Qué hacer con respuestas del dueño que lleguen después de los dos minutos?
-5. ¿Dónde se desplegará el servidor y el worker persistente? ¿Qué disponibilidad se espera?
+5. ¿Qué servidor se utilizará (proveedor, VPS o servidor físico), qué sistema operativo y recursos tendrá (CPU, RAM, almacenamiento) y quién administrará actualizaciones, copias de seguridad y monitoreo?
 6. ¿Se usará el mismo proyecto Supabase del sitio? ¿Quién entrega credenciales/contratos de API?
 7. ¿Qué frecuencia y criterios tendrá la vigilancia de la web? ¿Qué URLs además de la API deben observarse?
 8. ¿Qué activos de Instagram existen y qué acciones quiere automatizar exactamente: leer comentarios/mensajes, programar publicaciones, publicar, responder o solo generar borradores?
