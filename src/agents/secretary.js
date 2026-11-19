@@ -44,6 +44,24 @@ export function createSecretary({ config, store, whatsapp }) {
       await store.audit({ type: "owner_escalation_answered", escalationId: reply.escalationId });
       return;
     }
+    if (/^ESTADO WEB$/i.test(text)) {
+      const latest = await store.getLatestWebsiteCheck();
+      if (!latest) {
+        await whatsapp.sendText(message.from, "Aún no hay comprobaciones de la página. Verifica que WEBSITE_MONITOR_URL esté configurada y que el monitor esté activo.");
+      } else {
+        const details = [
+          "ESTADO DE LA PÁGINA BLACK OPS",
+          "• Estado: " + (latest.ok ? "RESPONDE" : "PRESENTA FALLAS"),
+          "• Última comprobación: " + latest.checkedAt,
+          "• Motivo: " + latest.reason,
+          latest.status ? "• HTTP: " + latest.status : "",
+          Number.isFinite(latest.latencyMs) ? "• Latencia: " + latest.latencyMs + " ms" : ""
+        ].filter(Boolean);
+        await whatsapp.sendText(message.from, details.join("\\n"));
+      }
+      await store.audit({ type: "owner_website_status_requested", hasCheck: Boolean(latest), ok: latest?.ok ?? null });
+      return;
+    }
     if (/^RESUMEN (HOY|SEMANA)$/i.test(text)) {
       const period = /SEMANA$/i.test(text) ? "weekly" : "daily";
       const report = await buildOwnerReport(store, { period, timeZone: config.reportTimeZone });
