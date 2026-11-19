@@ -72,3 +72,22 @@ test("los mensajes nunca confirman automáticamente un pago", () => {
   assert.match(customerPaymentReportMessage(), /NO significa que el pago esté confirmado/);
   assert.match(ownerPaymentReportMessage({ customer: "573001234567", reportedAmountCop: 50000 }), /PENDIENTE DE VERIFICACIÓN/);
 });
+
+
+import { isCustomerPaymentInfoRequest, customerPaymentInstructionsMessage } from "../src/agents/reservation-policy.js";
+
+test("reconoce preguntas sobre medios de pago sin confundirlas con reportes", () => {
+  assert.equal(isCustomerPaymentInfoRequest("¿Cómo puedo pagar por Nequi?"), true);
+  assert.equal(isCustomerPaymentInfoRequest("¿Aceptan efectivo?"), true);
+  assert.equal(isCustomerPaymentInfoRequest("Ya pagué $50.000 COP"), false);
+  assert.equal(isCustomerPaymentInfoRequest("¿Cuáles son los horarios?"), false);
+  assert.equal(isCustomerPaymentInfoRequest("x".repeat(1001)), false);
+});
+
+test("las instrucciones informan medios y condiciones sin confirmar reservas", () => {
+  const message = customerPaymentInstructionsMessage();
+  assert.match(message, /322 655 7479/);
+  assert.match(message, /anticipo del 20%/);
+  assert.match(message, /30 minutos/);
+  assert.match(message, /no confirma automáticamente la reserva/i);
+});
