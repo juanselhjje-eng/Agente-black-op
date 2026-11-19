@@ -47,3 +47,28 @@ test("no calcula devolución sobre pagos no verificados ni fechas inválidas", (
   assert.equal(evaluateRefundRequest({ paymentType: "full", paymentStatus: "reported", cancellationRequestedAt: at }).status, "not_eligible_for_refund_calculation");
   assert.equal(evaluateRefundRequest({ paymentType: "advance", paymentStatus: "verified", cancellationRequestedAt: "hoy" }).status, "invalid");
 });
+
+
+import { parseCustomerPaymentReport, customerPaymentReportMessage, ownerPaymentReportMessage } from "../src/agents/reservation-policy.js";
+
+test("reconoce un reporte explícito de pago, no preguntas de medios de pago", () => {
+  assert.deepEqual(parseCustomerPaymentReport("Ya pagué $50.000 COP, adjunto el comprobante"), {
+    reportedAmountCop: 50000,
+    evidenceType: "receipt_mentioned"
+  });
+  assert.equal(parseCustomerPaymentReport("¿Cómo puedo pagar por Nequi?"), null);
+  assert.equal(parseCustomerPaymentReport("Quiero conocer los precios"), null);
+});
+
+test("no acepta mensajes excesivos y conserva reportes sin monto", () => {
+  assert.equal(parseCustomerPaymentReport("ya pague " + "x".repeat(2000)), null);
+  assert.deepEqual(parseCustomerPaymentReport("Realicé la transferencia"), {
+    reportedAmountCop: null,
+    evidenceType: "payment_claim"
+  });
+});
+
+test("los mensajes nunca confirman automáticamente un pago", () => {
+  assert.match(customerPaymentReportMessage(), /NO significa que el pago esté confirmado/);
+  assert.match(ownerPaymentReportMessage({ customer: "573001234567", reportedAmountCop: 50000 }), /PENDIENTE DE VERIFICACIÓN/);
+});
