@@ -12,10 +12,10 @@ function extractMessages(payload) {
   return messages;
 }
 
-const normalizeNumber = value => String(value || "").replace(/\\D/g, "");
+const normalizeNumber = value => String(value || "").replace(/\D/g, "");
 
 export function parseOwnerReply(text) {
-  const match = String(text || "").trim().match(/^RESPONDER\\s+([0-9a-f-]{36})\\s*[:|-]\\s*([\\s\\S]+)$/i);
+  const match = String(text || "").trim().match(/^RESPONDER\s+([0-9a-f-]{36})\s*[:|-]\s*([\s\S]+)$/i);
   return match ? { escalationId: match[1], answer: match[2].trim() } : null;
 }
 
@@ -63,14 +63,14 @@ export function createSecretary({ config, store, whatsapp }) {
   }
   async function notifyOwner(message, prefix) {
     if (config.ownerAlertsEnabled && config.ownerWhatsAppNumber) {
-      await whatsapp.sendText(config.ownerWhatsAppNumber, `${prefix}\\nCliente: ${message.from}\\nMensaje: ${message.text}`);
+      await whatsapp.sendText(config.ownerWhatsAppNumber, `${prefix}\nCliente: ${message.from}\nMensaje: ${message.text}`);
     } else {
       console.warn("Alerta al dueño no enviada: falta configurar OWNER_WHATSAPP_NUMBER y OWNER_ALERTS_ENABLED.");
     }
   }
   async function createOwnerEscalation(message) {
     const item = await store.createEscalation({ customer: message.from, question: message.text });
-    await notifyOwner(message, `Consulta pendiente ${item.id}. Responde antes de 2 minutos con:\\nRESPONDER ${item.id}: tu respuesta\\nCliente: ${message.from}\\nPregunta: ${message.text}`);
+    await notifyOwner(message, `Consulta pendiente ${item.id}. Responde antes de 2 minutos con:\nRESPONDER ${item.id}: tu respuesta\nCliente: ${message.from}\nPregunta: ${message.text}`);
     return item;
   }
   return { handleWebhook, handleOwnerMessage, subagents };
