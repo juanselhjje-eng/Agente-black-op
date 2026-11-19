@@ -18,7 +18,7 @@ export function parseAvailabilityCommand(text) {
 }
 export function parseCustomerAvailabilityRequest(value) {
   const input = String(value || "").trim();
-  const match = input.match(/(?:disponibilidad|horarios|reservar|reserva)\\s+(?:para\\s+(?:el\\s+)?)?(\\d{4}-\\d{2}-\\d{2})(?:\\s+(?:para\\s+)?(\\d{1,2})(?:\\s*(?:personas|jugadores))?)?(?:\\s+(standard|tactical|elite))?/i);
+  const match = input.match(/(?:disponibilidad|horarios|reservar|reserva)\s+(?:para\s+(?:el\s+)?)?(\d{4}-\d{2}-\d{2})(?:\s+(?:para\s+)?(\d{1,2})(?:\s*(?:personas|jugadores))?)?(?:\s+(standard|tactical|elite))?/i);
   if (!match) return null;
   const date = match[1];
   const time = Date.parse(date + "T00:00:00.000Z");
