@@ -17,5 +17,7 @@ export const config = Object.freeze({
   ownerWhatsAppNumber: process.env.OWNER_WHATSAPP_NUMBER || "",
   ownerAlertsEnabled: process.env.OWNER_ALERTS_ENABLED === "true",
   blackopsApiBaseUrl: process.env.BLACKOPS_PUBLIC_API_BASE_URL || "",
-  blackopsApiEnabled: process.env.BLACKOPS_API_ENABLED === "true"
+  blackopsApiEnabled: process.env.BLACKOPS_API_ENABLED === "true",
+  websiteMonitorUrl: process.env.WEBSITE_MONITOR_URL || "",
+  websiteMonitorIntervalMs: Math.max(30000, number(process.env.WEBSITE_MONITOR_INTERVAL_MS, 300000))
 });
