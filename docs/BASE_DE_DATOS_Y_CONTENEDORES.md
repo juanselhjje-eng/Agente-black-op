@@ -1,31 +1,32 @@
 # Base de datos PostgreSQL y despliegue con contenedores
 
 ## Selección automática de almacenamiento
-- Sin `DATABASE_URL`: se usa JSON local para desarrollo de una instancia.
-- Con `DATABASE_URL`: el servidor usa PostgreSQL y crea las tablas/índices de la aplicación al iniciar.
-- El adaptador PostgreSQL conserva la interfaz del almacén existente: mensajes idempotentes, escalaciones, memorias versionadas, solicitudes web, verificaciones de página y auditoría.
-- Para operaciones de cierre de escalaciones y escritura de memorias se usan transacciones y bloqueos de fila para evitar respuestas duplicadas y pérdida de revisiones.
+- Sin `DATABASE_URL`: JSON local para desarrollo de una instancia.
+- Con `DATABASE_URL`: PostgreSQL, con tablas e índices inicializados al arrancar.
+- El adaptador conserva la interfaz del almacenamiento: mensajes idempotentes, escalaciones, memorias versionadas, solicitudes web, verificaciones de página y auditoría.
+- El cierre de escalaciones y las escrituras/actualizaciones de memorias usan transacciones y bloqueos de fila.
+- `PG_POOL_MAX` limita conexiones del pool; `PGSSL=true` activa TLS con validación de certificado.
 
 ## Tablas
-`blackops_messages`, `blackops_escalations`, `blackops_owner_memories`, `blackops_web_changes`, `blackops_website_checks`, `blackops_audit`. Índices cubren fechas, estados y consultas del worker.
+`blackops_messages`, `blackops_escalations`, `blackops_owner_memories`, `blackops_web_changes`, `blackops_website_checks`, `blackops_audit`. Índices cubren fechas, estados y consultas frecuentes. El SQL versionado está en `src/storage/migrations/001-initial.sql`.
 
-## Despliegue con Docker Compose
+## Despliegue Docker Compose
 1. Instalar Docker Engine/Desktop en el servidor compatible.
-2. Copiar el repositorio y `.env.production.example` como `.env` fuera del repositorio.
-3. Definir una contraseña PostgreSQL larga y aleatoria, y los secretos de los proveedores.
+2. Copiar el repositorio y `.env.production.example` como `.env` en carpeta protegida.
+3. Definir una contraseña PostgreSQL larga y aleatoria y los secretos reales fuera de Git.
 4. Ejecutar `docker compose up -d --build`.
 5. Comprobar `docker compose ps` y `http://127.0.0.1:3000/health`.
-6. Configurar HTTPS y proxy inverso (IIS/Nginx) antes de registrar el webhook público de Meta.
+6. Configurar HTTPS y proxy inverso (IIS/Nginx) antes del webhook público de Meta.
 7. Configurar backups cifrados del volumen PostgreSQL y probar restauración.
 
-El compose publica la aplicación solo en loopback; no expone PostgreSQL ni el puerto de aplicación a Internet. Un proxy HTTPS debe ejecutarse en el host o en una red protegida.
+La aplicación solo se publica en loopback; PostgreSQL no publica puertos. El proxy HTTPS debe ejecutarse en el host o red protegida.
 
-## Seguridad operativa
-- No introducir secretos en Git. El archivo `.env.production.example` solo contiene nombres y valores de ejemplo.
-- El usuario de la aplicación no es root en el contenedor.
-- La base de datos no publica puertos externos.
-- Mantener Docker, imagen base, Node y dependencias actualizados.
-- La base de datos requiere backup y prueba de recuperación; un volumen persistente no sustituye los backups.
+## Seguridad
+- Nunca introducir secretos en Git. `.env.production.example` solo tiene marcadores.
+- El contenedor ejecuta Node como usuario no root.
+- La base de datos no se expone a Internet.
+- Mantener imágenes y dependencias actualizadas.
+- Un volumen persistente no sustituye backups; probar restauraciones.
 
-## Límites
-El esquema y adaptador son una base inicial de producción, pero antes de tráfico real se requieren pruebas con la instancia PostgreSQL del cliente, estrategia de backup, retención, monitorización de pool y revisión de seguridad. La integración no activa por sí sola credenciales ni servicios externos.
+## Validación pendiente antes de producción
+El adaptador tiene pruebas unitarias iniciales, pero se debe probar contra PostgreSQL real del cliente, probar concurrencia y recuperación, definir retención/backup, revisar pool y hacer revisión de seguridad. La integración no activa credenciales ni servicios externos.
