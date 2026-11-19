@@ -13,7 +13,7 @@ export function createSubagents(config) {
   const ai = config.geminiApiKey ? new GoogleGenAI({ apiKey: config.geminiApiKey }) : null;
   const businessApi = createBlackOpsPublicApi(config);
   async function answerCustomer(message, ownerMemories = []) {
-    if (!ai) return { text: "¡Hola! Gracias por escribir a Black Ops Paintball. En este momento no puedo consultar el asistente automático. Para atención directa, escríbenos al 311 334 8774.", needsOwner: false, urgent: false };
+    if (!ai) return { text: "¡Hola! Gracias por escribir a Black Ops Paintball. En este momento el asistente automático no está disponible. Ya solicitamos apoyo al equipo; si necesitas atención inmediata, escríbenos al 311 334 8774.", needsOwner: true, urgent: false };
     let live = "";
     if (businessApi.isEnabled() && /precio|paquete|horario|partida abierta|disponibilidad/i.test(message)) {
       try { live = "\nConfiguración pública consultada: " + JSON.stringify(await businessApi.getPublicConfig()); }
