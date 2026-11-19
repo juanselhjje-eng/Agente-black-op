@@ -89,3 +89,10 @@ El resultado se etiqueta siempre como borrador y no se publica ni programa. Si n
 El flujo de atención reconoce solicitudes estructuradas como `disponibilidad 2026-11-20 para 4 personas tactical`, `horarios 2026-11-20 4 jugadores elite` o `reservar 2026-11-20`. Valida fecha calendario, paquete y rango de 2–10 jugadores, consulta la API pública y devuelve hasta ocho candidatos. Si el cliente pregunta por horarios sin fecha explícita o con datos inválidos, pide los datos en formato claro y no deja que el modelo generativo invente disponibilidad.
 
 La respuesta siempre advierte que son candidatos, no cupos bloqueados ni reservas confirmadas. Si la API está deshabilitada, no responde con datos o falla, dirige al cliente al equipo humano en el 311 334 8774. Esta función no crea reservas ni toma pagos.
+
+
+## Solicitud de reserva asistida (sin confirmación automática)
+
+El cliente puede enviar `SOLICITAR RESERVA AAAA-MM-DD HH:MM JUGADORES PAQUETE`, por ejemplo `SOLICITAR RESERVA 2026-11-20 10:30 4 tactical`. Se valida fecha real, hora operativa publicada (08:00–21:00 como hora de inicio), intervalos de 30 minutos, paquete y 2–10 jugadores. La solicitud se persiste con estado `pending_owner_review` en JSON o PostgreSQL. El dueño consulta `RESERVAS PENDIENTES` y puede marcar `CONTACTADO RESERVA ID`.
+
+**Límite funcional:** esto registra una solicitud de contacto, no una reserva ni un bloqueo de calendario. La API pública documentada no ofrece escritura. No se debe cobrar ni prometer cupo con base en este registro; la formalización requiere verificar el calendario oficial y registrar la reserva en el sistema privado.
