@@ -126,7 +126,7 @@ export function createPostgresStore({ connectionString, pool, max = 10 }) {
       return r.rows.map(row => row.data);
     },
     async approveWebChangeRequest(id, approvedBy) {
-      const r = await query("UPDATE blackops_web_changes SET status='approved_pending_integration',approved_by=$2,approved_at=NOW(),data=jsonb_set(jsonb_set(jsonb_set(data,'{status}','\\"approved_pending_integration\\"'::jsonb),'{approvedBy}',to_jsonb($2::text)),'{approvedAt}',to_jsonb(NOW()::text)) WHERE id=$1 AND status='pending_review' RETURNING data", [id,approvedBy]);
+      const r = await query("UPDATE blackops_web_changes SET status='approved_pending_integration',approved_by=$2,approved_at=NOW(),data=data || jsonb_build_object('status','approved_pending_integration','approvedBy',$2,'approvedAt',NOW()::text) WHERE id=$1 AND status='pending_review' RETURNING data", [id,approvedBy]);
       return r.rowCount ? r.rows[0].data : null;
     },
     async saveWebsiteCheck(result) {
