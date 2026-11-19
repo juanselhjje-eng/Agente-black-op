@@ -86,6 +86,26 @@ export function createStore(directory) {
       return items.at(-1) || null;
     },
     async listWebsiteChecks(limit = 20) { return (await read()).websiteChecks.slice(-Math.max(1, Math.min(100, limit))); },
+    async getOperationalMetrics(start, end) {
+      const state = await read();
+      const inRange = value => value && new Date(value) >= start && new Date(value) < end;
+      const audits = state.audit.filter(item => inRange(item.at));
+      const escalations = state.escalations.filter(item => inRange(item.createdAt));
+      const checks = state.websiteChecks.filter(item => inRange(item.checkedAt));
+      const changes = state.webChangeRequests;
+      return {
+        inboundMessages: state.messages.filter(item => inRange(item.storedAt)).length,
+        outboundMessages: audits.filter(item => item.type === "outgoing_message").length,
+        escalationsOpened: escalations.length,
+        escalationsAnswered: escalations.filter(item => item.status === "answered").length,
+        escalationsTimedOut: escalations.filter(item => item.status === "timed_out").length,
+        escalationsPending: state.escalations.filter(item => item.status === "pending").length,
+        websiteChecks: checks.length,
+        websiteFailures: checks.filter(item => !item.ok).length,
+        webChangesPending: changes.filter(item => item.status === "pending_review").length,
+        webChangesApprovedPending: changes.filter(item => item.status === "approved_pending_integration").length
+      };
+    },
     audit: event => mutate(state => {
       state.audit.push({ ...event, at: new Date().toISOString() }); state.audit = state.audit.slice(-10000);
     })
