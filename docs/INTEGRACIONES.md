@@ -83,3 +83,9 @@ El módulo `src/agents/auditor.js` resume los últimos eventos de auditoría sin
 El subagente `planificadorMarketing` combina investigación web fundamentada con generación de un calendario de hasta siete publicaciones. El dueño lo solicita por WhatsApp con `MARKETING: objetivo o tema`. Cada propuesta incluye objetivo, formato, gancho, concepto, caption, CTA, brief visual y métrica sugerida; adjunta fuentes HTTPS si el investigador las obtuvo.
 
 El resultado se etiqueta siempre como borrador y no se publica ni programa. Si no hay fuentes, las propuestas se presentan como ideas creativas, no como tendencias o hechos verificados. Antes de publicar, una persona debe validar precios, promociones, disponibilidad, políticas, derechos de imagen y autorización de uso de contenido. No existe todavía conexión con Instagram Graph API ni permisos para publicar.
+
+
+## Consulta de horarios desde WhatsApp del cliente
+El flujo de atención reconoce solicitudes estructuradas como `disponibilidad 2026-11-20 para 4 personas tactical`, `horarios 2026-11-20 4 jugadores elite` o `reservar 2026-11-20`. Valida fecha calendario, paquete y rango de 2–10 jugadores, consulta la API pública y devuelve hasta ocho candidatos. Si el cliente pregunta por horarios sin fecha explícita o con datos inválidos, pide los datos en formato claro y no deja que el modelo generativo invente disponibilidad.
+
+La respuesta siempre advierte que son candidatos, no cupos bloqueados ni reservas confirmadas. Si la API está deshabilitada, no responde con datos o falla, dirige al cliente al equipo humano en el 311 334 8774. Esta función no crea reservas ni toma pagos.
