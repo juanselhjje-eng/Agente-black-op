@@ -1,6 +1,7 @@
 import { createSubagents } from "./subagents.js";
 import { createOrchestrator } from "./orchestrator.js";
 import { buildOwnerReport } from "../reports/owner-report.js";
+import { parseCustomerPaymentReport, customerPaymentReportMessage, ownerPaymentReportMessage } from "./reservation-policy.js";
 import { parseCustomerReservationRequest, parseCustomerReservationCancellation, parseOwnerReservationRejection, parseOwnerReservationClosure, reservationRequestCustomerMessage, reservationRequestOwnerMessage, reservationRequestStatusMessage } from "./reservation-workflow.js";
 function extractMessages(payload) {
   const messages = [];
@@ -41,6 +42,23 @@ export function createSecretary({ config, store, whatsapp }) {
       await store.audit({ type: "incoming_message", messageId: message.id, from: message.from });
       if (config.ownerWhatsAppNumber && normalizeNumber(message.from) === normalizeNumber(config.ownerWhatsAppNumber)) {
         await handleOwnerMessage(message); continue;
+      }
+      const paymentReport = parseCustomerPaymentReport(message.text);
+      if (paymentReport) {
+        await whatsapp.sendText(message.from, customerPaymentReportMessage());
+        if (config.ownerAlertsEnabled && config.ownerWhatsAppNumber) {
+          await whatsapp.sendText(config.ownerWhatsAppNumber, ownerPaymentReportMessage({
+            customer: message.from,
+            reportedAmountCop: paymentReport.reportedAmountCop
+          }));
+        }
+        await store.audit({
+          type: "customer_payment_reported_unverified",
+          messageId: message.id,
+          evidenceType: paymentReport.evidenceType,
+          amountMentioned: paymentReport.reportedAmountCop !== null
+        });
+        continue;
       }
       const cancellationId = parseCustomerReservationCancellation(message.text);
       if (cancellationId) {
