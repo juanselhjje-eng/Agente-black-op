@@ -46,6 +46,29 @@ export function createSecretary({ config, store, whatsapp }) {
       await store.audit({ type: "owner_escalation_answered", escalationId: reply.escalationId });
       return;
     }
+    if (/^INVESTIGAR\\s*:/i.test(text)) {
+      const query = text.replace(/^INVESTIGAR\\s*:/i, "").trim();
+      if (!query) {
+        await whatsapp.sendText(message.from, "Después de INVESTIGAR: escribe el tema o competidor que quieres analizar.");
+        return;
+      }
+      try {
+        const report = await subagents.investigadorWeb.research(query);
+        const sourceLines = (report.sources || []).map((source, index) => (index + 1) + ". " + source.title + "\\n" + source.url);
+        const response = [
+          "INVESTIGACIÓN: " + report.topic,
+          report.status === "completed" ? report.summary : report.note,
+          sourceLines.length ? "FUENTES:\\n" + sourceLines.join("\\n") : "",
+          report.note
+        ].filter(Boolean).join("\\n\\n").slice(0, 6000);
+        await whatsapp.sendText(message.from, response);
+        await store.audit({ type: "owner_web_research_completed", topic: report.topic, sourceCount: report.sources?.length || 0, status: report.status });
+      } catch (error) {
+        await whatsapp.sendText(message.from, "No pude completar la investigación. " + (error?.message || "Intenta de nuevo más tarde."));
+        await store.audit({ type: "owner_web_research_failed", topic: query.slice(0, 300), reason: String(error?.message || "unknown").slice(0, 300) });
+      }
+      return;
+    }
     if (/^ESTADO WEB$/i.test(text)) {
       const latest = await store.getLatestWebsiteCheck();
       if (!latest) {
