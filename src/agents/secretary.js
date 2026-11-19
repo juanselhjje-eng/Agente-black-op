@@ -54,13 +54,13 @@ export function createSecretary({ config, store, whatsapp }) {
       }
       try {
         const report = await subagents.investigadorWeb.research(query);
-        const sourceLines = (report.sources || []).map((source, index) => (index + 1) + ". " + source.title + "\\n" + source.url);
+        const sourceLines = (report.sources || []).map((source, index) => (index + 1) + ". " + source.title + "\n" + source.url);
         const response = [
           "INVESTIGACIÓN: " + report.topic,
           report.status === "completed" ? report.summary : report.note,
-          sourceLines.length ? "FUENTES:\\n" + sourceLines.join("\\n") : "",
+          sourceLines.length ? "FUENTES:\n" + sourceLines.join("\n") : "",
           report.note
-        ].filter(Boolean).join("\\n\\n").slice(0, 6000);
+        ].filter(Boolean).join("\n\n").slice(0, 6000);
         await whatsapp.sendText(message.from, response);
         await store.audit({ type: "owner_web_research_completed", topic: report.topic, sourceCount: report.sources?.length || 0, status: report.status });
       } catch (error) {
@@ -78,8 +78,8 @@ export function createSecretary({ config, store, whatsapp }) {
           await whatsapp.sendText(message.from, "DISPONIBILIDAD NO VERIFICADA: " + result.message);
         } else {
           const lines = result.slots.slice(0, 24).map(slot => "• " + slot.date + " " + slot.time + "–" + slot.endsAt);
-          const suffix = result.slots.length > 24 ? "\\n... y " + (result.slots.length - 24) + " candidatos más." : "";
-          await whatsapp.sendText(message.from, ["CANDIDATOS DE DISPONIBILIDAD (no son reservas confirmadas)", result.message, "Fecha: " + date + " | Paquete: " + packageType + " | Jugadores: " + playersText, lines.length ? lines.join("\\n") + suffix : "Sin candidatos en ese día.", "La API pública no bloquea ni confirma cupos. Verifica y formaliza en el sistema oficial antes de prometer disponibilidad."].join("\\n\\n"));
+          const suffix = result.slots.length > 24 ? "\n... y " + (result.slots.length - 24) + " candidatos más." : "";
+          await whatsapp.sendText(message.from, ["CANDIDATOS DE DISPONIBILIDAD (no son reservas confirmadas)", result.message, "Fecha: " + date + " | Paquete: " + packageType + " | Jugadores: " + playersText, lines.length ? lines.join("\n") + suffix : "Sin candidatos en ese día.", "La API pública no bloquea ni confirma cupos. Verifica y formaliza en el sistema oficial antes de prometer disponibilidad."].join("\n\n"));
         }
         await store.audit({ type: "owner_availability_planned", date, packageType, players: Number(playersText), status: result.status, candidateCount: result.slots?.length || 0 });
       } catch (error) {
@@ -98,7 +98,7 @@ export function createSecretary({ config, store, whatsapp }) {
           const summary = report.summary;
           const findings = summary.findings.map(item => "• [" + item.severity.toUpperCase() + "] " + item.message + " (" + item.count + ")");
           const types = Object.entries(summary.eventTypes).slice(0, 8).map(([type,count]) => "• " + type + ": " + count);
-          await whatsapp.sendText(message.from, ["AUDITORÍA OPERATIVA — ÚLTIMAS 24 HORAS", "Eventos analizados: " + summary.eventCount, "Fallos registrados: " + summary.counts.failures, "Escalamientos urgentes: " + summary.counts.urgent, "Consultas vencidas: " + summary.counts.ownerTimeouts, findings.length ? "HALLAZGOS:\\n" + findings.join("\\n") : "Sin hallazgos de alerta en los eventos consultados.", types.length ? "ACTIVIDAD PRINCIPAL:\\n" + types.join("\\n") : "", summary.privacy].filter(Boolean).join("\\n\\n"));
+          await whatsapp.sendText(message.from, ["AUDITORÍA OPERATIVA — ÚLTIMAS 24 HORAS", "Eventos analizados: " + summary.eventCount, "Fallos registrados: " + summary.counts.failures, "Escalamientos urgentes: " + summary.counts.urgent, "Consultas vencidas: " + summary.counts.ownerTimeouts, findings.length ? "HALLAZGOS:\n" + findings.join("\n") : "Sin hallazgos de alerta en los eventos consultados.", types.length ? "ACTIVIDAD PRINCIPAL:\n" + types.join("\n") : "", summary.privacy].filter(Boolean).join("\n\n"));
         }
         await store.audit({ type: "owner_audit_report_requested", eventCount: report.summary?.eventCount || 0, findings: report.summary?.findings?.length || 0 });
       } catch (error) {
@@ -119,7 +119,7 @@ export function createSecretary({ config, store, whatsapp }) {
           latest.status ? "• HTTP: " + latest.status : "",
           Number.isFinite(latest.latencyMs) ? "• Latencia: " + latest.latencyMs + " ms" : ""
         ].filter(Boolean);
-        await whatsapp.sendText(message.from, details.join("\\n"));
+        await whatsapp.sendText(message.from, details.join("\n"));
       }
       await store.audit({ type: "owner_website_status_requested", hasCheck: Boolean(latest), ok: latest?.ok ?? null });
       return;
