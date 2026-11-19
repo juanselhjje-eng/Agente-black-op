@@ -115,3 +115,9 @@ El Secretario reconoce afirmaciones explícitas como `Ya pagué $50.000 COP, adj
 - No marca la reserva como pagada ni altera su estado.
 
 Las preguntas sobre cómo pagar no se clasifican como reportes. El aviso requiere que el equipo verifique el movimiento en la fuente administrativa. Todavía no hay integración para consultar pagos reales ni para recibir/almacenar comprobantes de forma segura.
+
+
+## Orientación de medios de pago por WhatsApp
+Cuando un cliente pregunta cómo pagar, el Secretario responde con los medios documentados: Nequi 322 655 7479, transferencia por el valor completo o efectivo con anticipo del 20% y saldo en efectivo. Informa que el proceso de pago por WhatsApp mantiene la reserva durante 30 minutos y recomienda confirmar con el equipo el valor del paquete y los datos antes de transferir.
+
+Esta respuesta es informativa: no crea una reserva, no genera una referencia de pago, no recibe ni valida comprobantes y no confirma el cupo. La confirmación requiere verificación del movimiento por el equipo. Las afirmaciones explícitas de pago siguen el flujo separado de reporte pendiente de verificación.
