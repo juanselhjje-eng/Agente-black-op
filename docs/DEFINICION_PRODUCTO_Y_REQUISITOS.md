@@ -17,10 +17,10 @@ El sistema debe:
 - informar ventas, ingresos, pagos pendientes/reportados/verificados y evolución comercial, siempre que el sistema exponga esos datos;
 - consultar inventario, detectar niveles bajos y alertar sobre necesidades de reposición, siempre que el sitio registre existencias y movimientos;
 - apoyar la preparación y, sujeto a permisos oficiales, algunas acciones de Instagram;
-- coordinar y revisar las tareas mediante una arquitectura lógica de siete agentes;
+- coordinar y revisar las tareas mediante un agente principal —el Secretario— que delega en subagentes especializados;
 - escalar preguntas que no pueda resolver al dueño, esperar dos minutos y, si no hay respuesta, informar al cliente sin inventar.
 
-**Distinción importante:** siete agentes son siete responsabilidades lógicas. No significa que deban desplegarse como siete servidores, modelos o procesos separados. La primera versión puede implementarlos como módulos/agentes dentro de una sola aplicación Node.js, coordinados por un orquestador. Se separarán físicamente solo si escala, seguridad o operación lo justifican.
+**Arquitectura jerárquica acordada:** existe un único agente principal, el **Secretario de Black Ops**, que actúa como administrador virtual, recibe las solicitudes, entiende las prioridades, decide qué subagente debe intervenir, coordina el trabajo, revisa el resultado y mantiene informado al dueño. Los especialistas son **subagentes** bajo la coordinación del Secretario; no son agentes principales independientes. En la primera versión, el Secretario y sus subagentes serán módulos dentro de una sola aplicación Node.js, no servidores ni procesos separados. La cantidad y los límites de los subagentes se podrán ajustar sin cambiar esta jerarquía.
 
 ## 2. Contexto del negocio confirmado por el PDF
 
@@ -86,30 +86,38 @@ El PDF señala explícitamente que no se debe inventar:
 
 Hasta confirmación, responder: **“Escríbenos por WhatsApp y te confirmamos”**.
 
-## 3. Arquitectura funcional solicitada: siete agentes
+## 3. Arquitectura funcional: Secretario principal y subagentes
 
-| Agente | Responsabilidad | Entradas principales | Resultado |
+### Agente principal: Secretario de Black Ops
+
+El **Secretario** es el agente mayor y responsable de la operación integral. Es el único punto central de coordinación. Recibe mensajes de clientes y del dueño, identifica qué se necesita, asigna tareas a los subagentes, reúne sus resultados, solicita revisión cuando corresponde y entrega una respuesta coherente. También es responsable de mantener informado proactivamente al dueño mediante alertas, novedades y reportes.
+
+El Secretario no debe delegar su responsabilidad final: antes de comunicar información importante, debe asegurarse de que el resultado tenga respaldo y respete los permisos del sistema.
+
+### Subagentes especializados
+
+| Subagente | Responsabilidad | Entradas principales | Resultado |
 |---|---|---|---|
-| Orquestador | Recibir tarea, clasificar intención, asignar agente, coordinar y controlar el flujo | Mensajes, eventos, tareas programadas | Plan y respuesta/acción coordinada |
-| Revisor | Validar exactitud, consistencia, políticas y resultados antes de responder o actuar | Borrador, fuentes, acción propuesta | Aprobación, corrección o bloqueo |
-| Investigador web | Investigar tendencias, competidores, referencias e ideas publicitarias | Consultas del dueño, temas, contexto comercial | Hallazgos con fuentes, fecha e ideas |
-| Atención WhatsApp | Entender al cliente, responder con base verificada, orientar reserva y escalar | Mensajes entrantes y base/API pública | Respuesta, derivación o pregunta pendiente |
-| Secretario del dueño | Mantener informado proactivamente al dueño: preguntas, alertas, novedades, resúmenes y reportes programados | Incidentes, preguntas, eventos, métricas de reservas/ventas/pagos/inventario y hallazgos de otros agentes | Notificaciones, alertas e informes por WhatsApp |
-| Analista administrativo/comercial (capacidad coordinada por Orquestador y Auditor, no un octavo agente) | Consolidar calendario, reservas, ventas, pagos e inventario; calcular indicadores y detectar variaciones | Datos administrativos autorizados del sistema de reservas, pagos y stock | Resumen operativo y comercial, alertas y tendencias |
-| Supervisor web y agenda | Vigilar disponibilidad y funcionamiento de la página; revisar calendario, reservas y, si hay acceso, inventario | URL, API pública, APIs autenticadas y fuentes administrativas autorizadas | Alertas de errores/cambios, agenda, reservas e inventario |
-| Investigador web | Investigar mercado, tendencias y competidores para proponer oportunidades de publicidad | Fuentes públicas web, redes y contexto comercial | Informe con enlaces, fecha, hallazgos e ideas accionables |
-| Auditor general | Revisar trazabilidad y desempeño de todos los agentes | Logs, eventos, respuestas, errores | Informe de funcionamiento y hallazgos |
+| Atención WhatsApp | Comprender al cliente, responder con información aprobada, orientar el proceso de reserva y detectar cuándo debe escalar | Mensajes entrantes, base de conocimiento y fuentes autorizadas | Respuesta al cliente, solicitud de información o caso para el Secretario |
+| Supervisor web y agenda | Vigilar el funcionamiento observable de la página y consultar calendario, disponibilidad y reservas según los accesos autorizados | URL, API pública, APIs autenticadas y fuentes administrativas | Alertas técnicas, estado de agenda y novedades de reservas |
+| Investigador web | Investigar tendencias, competidores y oportunidades de publicidad; proponer contenido y campañas para Instagram | Fuentes públicas web, consultas y contexto comercial | Hallazgos con fuentes y fechas, ideas y propuestas accionables |
+| Analista administrativo/comercial | Consolidar y analizar reservas, ventas, pagos e inventario; calcular indicadores y detectar variaciones | Datos administrativos autorizados del sistema | Indicadores, resúmenes operativos/comerciales y alertas |
+| Revisor | Comprobar exactitud, consistencia, respaldo de fuentes, cumplimiento de políticas y validez de resultados antes de comunicarlos o ejecutar acciones | Respuesta propuesta, fuentes, resultados y acción solicitada | Aprobación, corrección o bloqueo con motivo |
+| Auditor general | Supervisar trazabilidad y funcionamiento del Secretario y de los subagentes; detectar errores, fallos y comportamientos anómalos | Logs, eventos, respuestas, errores y resultados | Informe de operación, hallazgos y alertas |
 
-### Reglas transversales
-1. El Revisor debe verificar afirmaciones con base de conocimiento o fuentes autorizadas; no convierte una suposición del modelo en un hecho.
-2. El Secretario del dueño debe iniciar comunicaciones proactivas: reportes programados (por ejemplo, diario y semanal) y alertas inmediatas cuando se detecten incidentes o condiciones importantes. La frecuencia y los umbrales exactos deben acordarse.
-3. El informe administrativo debe separar claramente reservas, ventas, pagos e inventario. No asumir que una reserva equivale a una venta cobrada ni que un comprobante reportado equivale a un pago verificado.
-4. Las recomendaciones publicitarias deben incluir fuentes/enlaces, fecha de consulta, por qué pueden servirle al negocio y una propuesta concreta. Distinguir hallazgos verificables de ideas generadas por IA.
-5. No afirmar que la página, el calendario, los pagos o el inventario están supervisados si no existe una fuente técnica disponible y autorizada para consultarlos.
-2. Ningún agente puede inventar disponibilidad, precios, confirmaciones de pago o políticas.
-3. Acciones externas (publicar en Instagram, modificar agenda, cancelar/crear reservas) requieren API, permisos y autorización expresa. Una capacidad conversacional no implica permiso para ejecutar la acción.
-4. Las consultas al dueño deben registrar la pregunta, cliente/conversación relacionada, hora de inicio, vencimiento, estado y respuesta recibida.
-5. El Auditor debe generar trazabilidad sin exponer datos de clientes innecesarios.
+### Coordinación y reglas transversales
+
+1. El Secretario cumple la función de orquestador: decide qué subagente interviene, puede encadenar varios subagentes y conserva el contexto de la solicitud.
+2. Los subagentes no se comunican autónomamente con el cliente ni toman decisiones fuera de su ámbito; entregan sus resultados al Secretario. El Secretario controla la respuesta final.
+3. El Revisor valida afirmaciones con la base de conocimiento o fuentes autorizadas; no convierte una suposición del modelo en un hecho.
+4. El Secretario inicia comunicaciones proactivas al dueño: reportes programados (por ejemplo, diario y semanal) y alertas inmediatas ante incidentes o condiciones importantes. La frecuencia y los umbrales exactos deben acordarse.
+5. El informe administrativo separa reservas, ventas, pagos e inventario. Una reserva no equivale necesariamente a una venta cobrada y un comprobante reportado no equivale a un pago verificado.
+6. Las recomendaciones publicitarias incluyen fuentes/enlaces, fecha de consulta, por qué pueden servirle al negocio y una propuesta concreta. Se distinguen los hallazgos verificables de las ideas generadas por IA.
+7. Ningún componente puede inventar disponibilidad, precios, confirmaciones de pago o políticas.
+8. No se afirma que la página, el calendario, los pagos o el inventario están supervisados si no existe una fuente técnica disponible y autorizada para consultarlos.
+9. Acciones externas (publicar en Instagram, modificar agenda, cancelar/crear reservas) requieren API, permisos y autorización expresa. Una capacidad conversacional no implica permiso para ejecutar la acción.
+10. Las consultas al dueño registran pregunta, cliente/conversación relacionada, hora de inicio, vencimiento, estado y respuesta recibida.
+11. El Auditor genera trazabilidad sin exponer datos de clientes innecesarios.
 
 ## 4. Flujo de escalamiento al dueño: regla de dos minutos
 
@@ -176,9 +184,9 @@ No hace falta crear una página web propia para que los clientes conversen con e
 El chatbot de WhatsApp puede construirse y probarse sin una web pública. Puede comenzar con la base de conocimiento aprobada y, cuando el negocio confirme el estado de la página y entregue los accesos, integrar las consultas que estén autorizadas.
 
 ### Flujo técnico general
-WhatsApp webhook → validación del evento → Orquestador → Atención WhatsApp/otro agente → fuentes autorizadas y herramientas → Revisor → respuesta WhatsApp.  
-Para casos sin respuesta: Orquestador → Secretario del dueño → espera persistente de 2 minutos → respuesta del dueño o cierre por timeout.  
-Los eventos, acciones y resultados → Auditor general.
+WhatsApp webhook → validación del evento → Secretario principal → subagente(s) especializado(s) → fuentes autorizadas y herramientas → Revisor → Secretario → respuesta WhatsApp.  
+Para casos sin respuesta: Secretario principal → consulta al dueño → espera persistente de 2 minutos → respuesta del dueño o cierre por timeout.  
+Los eventos, acciones y resultados del Secretario y sus subagentes → Auditor general.
 
 ## 6. Integración referenciada en el PDF y brecha de datos administrativos
 
@@ -317,7 +325,7 @@ Si la página todavía no está construida, estos módulos deben contemplarse de
 - Se generan alertas cuando se incumplen umbrales acordados y se identifica la fuente y hora de detección.
 - Si no hay acceso a ventas, pagos o inventario, el informe lo indica explícitamente como dato no disponible, sin estimarlo ni inventarlo.
 - El fallo de Gemini, WhatsApp o la API no provoca que el sistema invente datos; genera respuesta de contingencia y registro.
-- Los agentes tienen responsabilidades separadas y el Orquestador coordina el flujo.
+- El Secretario es el agente principal y coordina a los subagentes; los subagentes entregan resultados al Secretario y este controla la respuesta final.
 
 ## 11. Fuente y jerarquía de información
 
