@@ -1,7 +1,7 @@
 # Estado real del proyecto Black Ops Paintball
 
 **Corte:** 19 de noviembre de 2026  
-**Estimación global corregida:** aproximadamente **36%** de alcance funcional.  
+**Estimación global corregida:** aproximadamente **38%** de alcance funcional.  
 **Estado:** prototipo backend en desarrollo; no está listo para producción.
 
 ## Cómo se calcula el avance
@@ -17,7 +17,7 @@ La estimación es orientativa y debe revisarse al cerrar cada bloque de aceptaci
 | Backend Node.js y arquitectura modular | Servidor, configuración, módulos y CI; falta endurecimiento y validación productiva | 65% |
 | Atención por WhatsApp | Webhook, cliente Cloud API y lógica básica; falta conectar número/Meta y pruebas reales de extremo a extremo | 45% |
 | Gemini y atención inteligente | SDK y generación JSON; sin pruebas con credenciales reales, function calling y orquestación aún limitada | 35% |
-| Secretario y coordinación de subagentes | Hay estructura de módulos, pero varios subagentes son descripciones pendientes, no agentes funcionales completos | 25% |
+| Secretario y coordinación de subagentes | Orquestador central integrado a la atención; varios subagentes administrativos siguen siendo descripciones o dependen de APIs externas | 40% |
 | Memoria del dueño | Guardar, listar, corregir y desactivar; falta validación de seguridad y pruebas productivas | 70% |
 | Escalamiento al dueño | Caso, respuesta y timeout de dos minutos; falta resolver robustez multiinstancia y respuestas tardías | 60% |
 | Supervisión web | Comprobación HTTP, historial, alertas y consulta ESTADO WEB; no valida el proceso de reserva completo | 60% |
@@ -28,7 +28,7 @@ La estimación es orientativa y debe revisarse al cerrar cada bloque de aceptaci
 | Inventario y alertas de reposición | Sin modelo ni fuente de existencias/movimientos | 0% |
 | Investigación de competencia y tendencias | Subagente pendiente de integrar búsqueda, citas y registro de fuentes | 0% |
 | Marketing e Instagram | Sin generador de campañas integrado ni Instagram Graph API | 0% |
-| Revisor y auditor general | Reglas parciales y eventos de auditoría; no existe aún revisión independiente de cada respuesta/acción ni análisis de anomalías | 15% |
+| Revisor y auditor general | Revisor determinista integrado a respuestas de clientes para urgencias, pagos y datos privados; auditoría de eventos existente, falta revisión de acciones y anomalías | 30% |
 | Despliegue Windows Server | Docker y guías iniciales; no hay servidor, dominio, HTTPS, instalación ni restauración probada | 15% |
 | Seguridad, operación y continuidad | HMAC opcional/obligatorio en producción, secretos por entorno, PostgreSQL y scripts; faltan pruebas de seguridad, backups reales y carga | 30% |
 
@@ -45,7 +45,7 @@ El proyecto tiene una base técnica útil, pero la mayor parte de las funciones 
 - Almacenamiento JSON y adaptador PostgreSQL.
 - Memoria del dueño y flujo de escalamiento.
 - Monitor HTTP con historial, alertas y consulta de estado.
-- Reportes operativos manuales y envío automático diario/semanal configurable, desactivado por defecto.
+- Reportes operativos manuales y envío automático diario/semanal configurable, desactivado por defecto.\n- Orquestador central conectado al flujo de atención y revisor determinista de respuestas con pruebas automatizadas.
 - Dockerfile, Compose, CI y documentación inicial.
 - Pruebas automatizadas ejecutadas por GitHub Actions; esto no sustituye pruebas de integración contra Meta, Gemini, PostgreSQL real ni el sitio de reservas.
 
@@ -68,5 +68,5 @@ No se declarará 80% hasta que estén funcionales y probadas en entorno de integ
 1. Completar scheduler y validación de reportes programados.
 2. Implementar herramientas administrativas con contratos y permisos explícitos cuando el negocio entregue la API.
 3. Construir investigación de mercado con fuentes, fecha y trazabilidad.
-4. Implementar revisor de respuestas y auditoría de operación.
+4. Ampliar revisor para verificar disponibilidad y operaciones autorizadas; completar auditoría de acciones y anomalías.
 5. Completar pruebas de integración, seguridad y despliegue.
