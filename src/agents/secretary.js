@@ -1,7 +1,7 @@
 import { createSubagents } from "./subagents.js";
 import { createOrchestrator } from "./orchestrator.js";
 import { buildOwnerReport } from "../reports/owner-report.js";
-import { parseCustomerReservationRequest, reservationRequestCustomerMessage, reservationRequestOwnerMessage } from "./reservation-workflow.js";
+import { parseCustomerReservationRequest, parseCustomerReservationCancellation, parseOwnerReservationRejection, reservationRequestCustomerMessage, reservationRequestOwnerMessage, reservationRequestStatusMessage } from "./reservation-workflow.js";
 function extractMessages(payload) {
   const messages = [];
   for (const entry of payload?.entry || []) for (const change of entry?.changes || []) for (const message of change?.value?.messages || []) {
@@ -41,6 +41,18 @@ export function createSecretary({ config, store, whatsapp }) {
       await store.audit({ type: "incoming_message", messageId: message.id, from: message.from });
       if (config.ownerWhatsAppNumber && normalizeNumber(message.from) === normalizeNumber(config.ownerWhatsAppNumber)) {
         await handleOwnerMessage(message); continue;
+      }
+      const cancellationId = parseCustomerReservationCancellation(message.text);
+      if (cancellationId) {
+        const requests = await store.listReservationRequests({ activeOnly: false });
+        const matches = requests.filter(item => item.id.startsWith(cancellationId));
+        const item = matches.length === 1 ? matches[0] : null;
+        const updated = item && normalizeNumber(item.customer) === normalizeNumber(message.from)
+          ? await store.updateReservationRequest(item.id, "cancelled_by_customer", { resolutionNote: "Cancelada por el cliente." })
+          : null;
+        await whatsapp.sendText(message.from, updated ? reservationRequestStatusMessage(updated) : "No encontré una solicitud activa con ese código asociada a este número. Si necesitas ayuda, escríbenos al 311 334 8774.");
+        if (updated) await store.audit({ type: "customer_reservation_request_cancelled", requestId: updated.id });
+        continue;
       }
       const reservationRequest = parseCustomerReservationRequest(message.text);
       if (reservationRequest) {
