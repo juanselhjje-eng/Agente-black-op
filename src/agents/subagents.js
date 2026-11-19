@@ -5,6 +5,7 @@ import { createWebResearcher } from "./web-researcher.js";
 import { createAdminAnalyst } from "./admin-analyst.js";
 import { planPublicAvailability } from "./availability-planner.js";
 import { createGeneralAuditor } from "./auditor.js";
+import { createMarketingPlanner } from "./marketing-planner.js";
 
 const KNOWLEDGE = `Black Ops Paintball es un campo de paintball táctico en Támesis, Antioquia, Colombia.
 Paquetes por jugador: Estándar 1h/100 bolas $35.000; Táctico 1,5h/150 bolas $50.000; Élite 2h/200 bolas $60.000.
@@ -18,6 +19,7 @@ export function createSubagents(config, { store } = {}) {
   const researcher = createWebResearcher({ ai, model: config.geminiModel });
   const adminAnalyst = createAdminAnalyst();
   const generalAuditor = createGeneralAuditor({ store });
+  const marketingPlanner = createMarketingPlanner({ ai, model: config.geminiModel, researcher });
   const businessApi = createBlackOpsPublicApi(config);
   async function planAvailability({ from, to = from, packageType = "standard", players = 2 }) {
     if (!businessApi.isEnabled()) return { status: "unavailable", message: "La consulta de disponibilidad no está habilitada; no puedo confirmar horarios.", slots: [] };
@@ -63,6 +65,7 @@ export function createSubagents(config, { store } = {}) {
     atencionWhatsApp: { answer: answerCustomer },
     supervisorWebAgenda: { isConfigured: businessApi.isEnabled, getPublicConfig: businessApi.getPublicConfig, getAvailability: businessApi.getAvailability, planAvailability },
     investigadorWeb: researcher,
+    planificadorMarketing: marketingPlanner,
     analistaAdministrativo: adminAnalyst,
     revisor: { description: "Validación inicial de formato y políticas." },
     auditorGeneral: generalAuditor,
