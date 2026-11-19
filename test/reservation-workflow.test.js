@@ -18,7 +18,7 @@ test("rechaza fechas, horas, intervalos y cantidades inválidas", () => {
   ]) assert.equal(parseCustomerReservationRequest(value), null);
 });
 
-import { parseCustomerReservationCancellation, parseOwnerReservationRejection, transitionReservationRequest } from "../src/agents/reservation-workflow.js";
+import { parseCustomerReservationCancellation, parseOwnerReservationRejection, parseOwnerReservationClosure, transitionReservationRequest } from "../src/agents/reservation-workflow.js";
 
 test("el cliente puede solicitar cancelar usando el código", () => {
   assert.equal(parseCustomerReservationCancellation("CANCELAR SOLICITUD 12345678"), "12345678");
@@ -33,4 +33,10 @@ test("la máquina de estados permite solo transiciones previstas", () => {
   assert.equal(transitionReservationRequest(request, "rejected", { resolutionNote: "Sin cupo" }).status, "rejected");
   assert.equal(transitionReservationRequest(request, "scheduled"), null);
   assert.equal(transitionReservationRequest({ ...request, status: "rejected" }, "owner_contacted"), null);
+});
+
+test("el dueño puede cerrar una solicitud con nota opcional", () => {
+  assert.deepEqual(parseOwnerReservationClosure("CERRAR SOLICITUD 12345678: Cliente informado"), { idPrefix: "12345678", note: "Cliente informado" });
+  assert.deepEqual(parseOwnerReservationClosure("CERRAR SOLICITUD 12345678"), { idPrefix: "12345678", note: "Cerrada por el equipo." });
+  assert.equal(parseOwnerReservationClosure("CERRAR SOLICITUD"), null);
 });
