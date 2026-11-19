@@ -96,3 +96,10 @@ La respuesta siempre advierte que son candidatos, no cupos bloqueados ni reserva
 El cliente puede enviar `SOLICITAR RESERVA AAAA-MM-DD HH:MM JUGADORES PAQUETE`, por ejemplo `SOLICITAR RESERVA 2026-11-20 10:30 4 tactical`. Se valida fecha real, hora operativa publicada (08:00–21:00 como hora de inicio), intervalos de 30 minutos, paquete y 2–10 jugadores. La solicitud se persiste con estado `pending_owner_review` en JSON o PostgreSQL. El dueño consulta `RESERVAS PENDIENTES` y puede marcar `CONTACTADO RESERVA ID`.
 
 **Límite funcional:** esto registra una solicitud de contacto, no una reserva ni un bloqueo de calendario. La API pública documentada no ofrece escritura. No se debe cobrar ni prometer cupo con base en este registro; la formalización requiere verificar el calendario oficial y registrar la reserva en el sistema privado.
+
+
+### Seguimiento y cierre de solicitudes de reserva
+
+El cliente puede cancelar únicamente su propia solicitud aún abierta con `CANCELAR SOLICITUD ID_CORTO`. Se compara el número de WhatsApp remitente con el número que originó la solicitud y se exige que el código identifique un único registro. El dueño puede rechazar una solicitud con `RECHAZAR SOLICITUD ID_CORTO: motivo`; el sistema notifica al cliente y registra el evento. Los estados terminales (`rejected`, `cancelled_by_customer`, `closed`) no pueden reabrirse mediante estas acciones.
+
+Estas operaciones afectan solo solicitudes de contacto almacenadas por el asistente. No cancelan, cambian ni modifican una reserva confirmada en el calendario externo.
