@@ -5,7 +5,7 @@ El PDF funcional documenta una API POST que recibe `{ method: "GET", path }` par
 - `/api/public/config`
 - `/api/public/availability?from=YYYY-MM-DD&to=YYYY-MM-DD`
 
-El módulo `src/integrations/blackops-api.js` implementa únicamente esas consultas GET encapsuladas en POST. Está deshabilitado por defecto. Confirmar con el desarrollador que la URL y el contrato siguen vigentes.
+El módulo `src/integrations/blackops-api.js` implementa únicamente esas consultas GET encapsuladas en POST. Está deshabilitado por defecto y exige HTTPS (excepto localhost). Valida fechas reales y ventanas de hasta 31 días, aplica timeout de 8 segundos, comprueba respuestas JSON de tipo objeto y normaliza fallos de red/HTTP/JSON sin filtrar detalles internos. Confirmar con el desarrollador que la URL y el contrato siguen vigentes.
 
 No implementa escritura, autenticación, pagos, inventario ni lectura privada de reservas. No inferir disponibilidad final sin aplicar márgenes y bloqueos.
 
