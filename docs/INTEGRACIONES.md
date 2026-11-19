@@ -48,3 +48,13 @@ INVESTIGAR: competidores de paintball en Antioquia
 INVESTIGAR: tendencias recientes de experiencias recreativas y contenido para Instagram
 ```
 La respuesta incluye resumen y enlaces HTTPS que Gemini devuelve como fuentes de grounding. Si no hay fuentes verificables, el resultado lo advierte y no debe tratarse como hecho confirmado. La disponibilidad depende de `GEMINI_API_KEY`, del modelo configurado y de que Google Search grounding esté habilitado para ese modelo/cuenta. No publica contenido ni ejecuta campañas.
+
+
+## Analista administrativo
+El módulo `src/agents/admin-analyst.js` calcula métricas deterministas a partir de un snapshot normalizado:
+- Reservas por estado conocido.
+- Pagos reportados no verificados separados de pagos confirmados.
+- Ingresos solo con estado de pago verificado y campo `verifiedAt`.
+- Inventario en o por debajo del mínimo configurado.
+
+El proveedor debe inyectar `getSnapshot(range)` y conectarse a una API administrativa autenticada de solo lectura. Actualmente no hay proveedor configurado: el módulo de cálculo y sus pruebas existen, pero no consulta ventas, pagos, reservas privadas ni inventario reales. Los montos deben llegar como enteros en COP; el resumen no calcula utilidad, impuestos ni costos.
