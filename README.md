@@ -22,3 +22,20 @@ Este repositorio contiene la definición funcional inicial. Todavía no represen
 ## Próximo paso recomendado
 
 Cerrar las preguntas de la sección **“Preguntas que el cliente/desarrollador debe cerrar”** de la especificación antes de implementar integraciones y automatizaciones.
+
+
+## Regla de trabajo
+
+**Todo el desarrollo se realiza directamente en este repositorio de GitHub.** Código, documentación, pruebas, scripts y archivos de configuración de ejemplo deben quedar versionados aquí. La fuente de verdad del proyecto es la rama principal del repositorio. No se guardan claves ni tokens en GitHub.
+
+Consulta [PROJECT_RULES.md](PROJECT_RULES.md) antes de realizar cambios.
+
+## Primer scaffold de backend
+
+Se creó una base inicial de Node.js:
+- `package.json`: scripts y dependencias iniciales.
+- `src/server.js`: servidor Express con endpoint `/health`.
+- `.env.example`: variables necesarias, sin secretos.
+- `.gitignore`: exclusión de secretos y archivos locales.
+
+Este scaffold aún no conecta WhatsApp ni Gemini; es la base para implementar y probar las integraciones por etapas.
