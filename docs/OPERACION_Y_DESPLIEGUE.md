@@ -35,13 +35,14 @@ Seguir [Base de datos y contenedores](BASE_DE_DATOS_Y_CONTENEDORES.md). En Windo
 - Memoria versionada y solicitudes de cambios web.
 - Monitor HTTP, historial y alertas de caída/recuperación; cada transición se audita incluso si las alertas al dueño están desactivadas.
 - Consulta administrativa `ESTADO WEB` por WhatsApp para conocer el último resultado, código HTTP y latencia.
+- Reportes diarios y semanales programables por WhatsApp al dueño, desactivados por defecto y configurables por zona horaria.
 - Adaptador PostgreSQL con índices, transacciones y pool; JSON para desarrollo.
 - Dockerfile no-root, Compose con base de datos privada y healthcheck de PostgreSQL.
 
 ## Reportes operativos al dueño
 El dueño puede solicitar por WhatsApp `RESUMEN HOY` o `RESUMEN SEMANA`. El sistema calcula los periodos en `REPORT_TIMEZONE` (por defecto `America/Bogota`) y consolida mensajes recibidos/enviados, consultas escaladas, respuestas y vencimientos, comprobaciones HTTP y solicitudes de cambios web pendientes. Los contadores se basan en los eventos que el agente ha logrado registrar; una disponibilidad HTTP alta no garantiza que el proceso de reservas funcione correctamente.
 
-Los reportes son bajo demanda, no se envían automáticamente. El dueño también puede escribir `ESTADO WEB` para consultar la última comprobación del monitor. Las transiciones de estado quedan en auditoría aunque las notificaciones estén apagadas; para recibir el WhatsApp se requieren `OWNER_ALERTS_ENABLED=true` y `OWNER_WHATSAPP_NUMBER`. Ventas, pagos, inventario y reservas privadas se muestran como no disponibles hasta integrar una API autenticada con permisos de lectura. No se derivan ingresos de las reservas ni se consideran comprobantes reportados como pagos verificados.
+Los reportes pueden solicitarse bajo demanda con `RESUMEN HOY` y `RESUMEN SEMANA`. También existe envío automático diario y semanal, pero permanece desactivado por defecto: para activarlo configura `OWNER_REPORTS_ENABLED=true`, `OWNER_DAILY_REPORT_TIME=08:00` y `OWNER_WEEKLY_REPORT_TIME=08:15`. Los horarios se interpretan en `REPORT_TIMEZONE` (por defecto `America/Bogota`); si el proceso inicia después de la hora prevista, recupera el envío durante ese mismo día (o lunes para el semanal). El dueño también puede escribir `ESTADO WEB` para consultar la última comprobación del monitor. Las transiciones de estado quedan en auditoría aunque las notificaciones estén apagadas; para recibir el WhatsApp se requieren `OWNER_ALERTS_ENABLED=true` y `OWNER_WHATSAPP_NUMBER`. Ventas, pagos, inventario y reservas privadas se muestran como no disponibles hasta integrar una API autenticada con permisos de lectura. No se derivan ingresos de las reservas ni se consideran comprobantes reportados como pagos verificados.
 
 ## Limitaciones
 - Las credenciales Meta/Gemini y la URL real no están configuradas.
