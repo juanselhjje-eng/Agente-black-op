@@ -11,8 +11,10 @@ export function summarizeAuditEvents(events = []) {
   );
   const urgent = safeEvents.filter(event => event.urgent === true || event.type === "urgent_customer_escalation");
   const timeouts = safeEvents.filter(event => event.type === "owner_escalation_timeout");
+  const paymentReports = safeEvents.filter(event => event.type === "customer_payment_reported_unverified");
   const findings = [];
   if (timeouts.length) findings.push({ severity: "warning", code: "owner_response_timeout", count: timeouts.length, message: "Consultas de clientes vencieron sin respuesta del dueño." });
+  if (paymentReports.length) findings.push({ severity: "warning", code: "payment_reports_pending", count: paymentReports.length, message: "Clientes reportaron pagos que todavía requieren verificación administrativa." });
   const websiteDown = failures.filter(event => event.type === "website_status_changed" && event.ok === false);
   if (websiteDown.length) findings.push({ severity: "critical", code: "website_down_event", count: websiteDown.length, message: "Se registraron eventos de caída de la página; revisar el último chequeo y la recuperación." });
   const researchFailed = failures.filter(event => event.type === "owner_web_research_failed");
@@ -24,7 +26,7 @@ export function summarizeAuditEvents(events = []) {
     eventCount: safeEvents.length,
     eventTypes: Object.fromEntries(Object.entries(counts).sort((a,b) => b[1]-a[1] || a[0].localeCompare(b[0]))),
     findings,
-    counts: { failures: failures.length, urgent: urgent.length, ownerTimeouts: timeouts.length },
+    counts: { failures: failures.length, urgent: urgent.length, ownerTimeouts: timeouts.length, paymentReportsPending: paymentReports.length },
     privacy: "El resumen muestra tipos y conteos; no reproduce teléfonos, nombres, mensajes ni datos personales."
   };
 }
