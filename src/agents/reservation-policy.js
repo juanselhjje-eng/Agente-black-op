@@ -137,10 +137,10 @@ export const reservationPolicyStatuses = Object.freeze([...RESERVATION_STATUSES]
 export function parseCustomerPaymentReport(value) {
   const text = String(value || "").trim();
   if (!text || text.length > 2000) return null;
-  const normalized = text.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase();
-  const evidencePattern = /\\b(?:ya pague|pago realizado|realice (?:la )?transferencia|hice (?:la )?transferencia|envie (?:el )?comprobante|adjunto (?:el )?comprobante|transferencia realizada|consignacion realizada)\\b/;
+  const normalized = text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const evidencePattern = /\b(?:ya pague|pago realizado|realice (?:la )?transferencia|hice (?:la )?transferencia|envie (?:el )?comprobante|adjunto (?:el )?comprobante|transferencia realizada|consignacion realizada)\b/;
   if (!evidencePattern.test(normalized)) return null;
-  const amountMatch = normalized.match(/\\b(?:cop\\s*)?\\$?\\s*(\\d{1,3}(?:[.,]\\d{3})+|\\d{4,9})(?:\\s*(?:cop|pesos))?\\b/);
+  const amountMatch = normalized.match(/\b(?:cop\s*)?\$?\s*(\d{1,3}(?:[.,]\d{3})+|\d{4,9})(?:\s*(?:cop|pesos))?\b/);
   let reportedAmountCop = null;
   if (amountMatch) {
     const digits = amountMatch[1].replace(/[.,]/g, "");
