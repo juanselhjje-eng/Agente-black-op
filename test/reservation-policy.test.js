@@ -1,0 +1,49 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { classifyPaymentEvidence, evaluateCancellationRequest, evaluateRefundRequest, reservationPolicyStatuses } from "../src/agents/reservation-policy.js";
+
+const at = "2026-11-19T18:00:00.000Z";
+
+test("solo una verificación administrativa válida reconoce un pago", () => {
+  assert.equal(classifyPaymentEvidence({ customerReported: true, reportedAmountCop: 50000 }).status, "reported");
+  assert.equal(classifyPaymentEvidence({ serverStatus: "verified", verifiedAt: at, amountCop: 50000 }).status, "verified");
+  assert.equal(classifyPaymentEvidence({ serverStatus: "verified", verifiedAt: "ayer", amountCop: 50000 }).status, "pending");
+  assert.equal(classifyPaymentEvidence({ serverStatus: "verified", verifiedAt: at, amountCop: -1 }).status, "pending");
+});
+
+test("clasifica los estados canónicos y no inventa estados", () => {
+  assert.ok(reservationPolicyStatuses.includes("scheduled"));
+  assert.equal(evaluateCancellationRequest({ reservationStatus: "invented", requestedAt: at }).status, "invalid");
+  assert.equal(evaluateCancellationRequest({ reservationStatus: "scheduled", requestedAt: at }).action, "contact_team");
+});
+
+test("las reservas pendientes reciben orientación de autoservicio, sin ejecutar cancelación", () => {
+  const result = evaluateCancellationRequest({ reservationStatus: "pending_payment", requestedAt: at });
+  assert.equal(result.action, "use_account");
+  assert.match(result.message, /no puede ejecutar/i);
+});
+
+test("clima o fuerza mayor requieren revisión para reprogramar sin costo", () => {
+  const result = evaluateCancellationRequest({ reservationStatus: "scheduled", requestedAt: at, reason: "weather", paymentType: "full" });
+  assert.equal(result.action, "owner_reschedule");
+  assert.equal(result.refundReview, true);
+});
+
+test("reservas completadas, vencidas o canceladas no se cancelan de nuevo", () => {
+  for (const reservationStatus of ["completed", "expired", "cancelled"]) {
+    assert.equal(evaluateCancellationRequest({ reservationStatus, requestedAt: at }).status, "not_applicable");
+  }
+});
+
+test("ninguna devolución se aprueba automáticamente", () => {
+  for (const paymentType of ["full", "advance", "cash"]) {
+    const result = evaluateRefundRequest({ paymentType, paymentStatus: "verified", cancellationRequestedAt: at });
+    assert.equal(result.automaticApproval, false);
+    assert.equal(result.status, "human_review");
+  }
+});
+
+test("no calcula devolución sobre pagos no verificados ni fechas inválidas", () => {
+  assert.equal(evaluateRefundRequest({ paymentType: "full", paymentStatus: "reported", cancellationRequestedAt: at }).status, "not_eligible_for_refund_calculation");
+  assert.equal(evaluateRefundRequest({ paymentType: "advance", paymentStatus: "verified", cancellationRequestedAt: "hoy" }).status, "invalid");
+});
