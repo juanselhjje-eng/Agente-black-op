@@ -66,6 +66,6 @@ export function reservationRequestStatusMessage(request) {
 
 
 export function parseOwnerReservationClosure(value) {
-  const match = String(value || "").trim().match(/^CERRAR SOLICITUD\\s+([0-9a-f-]{8,36})(?:\\s*:\\s*(.{1,300}))?$/i);
+  const match = String(value || "").trim().match(/^CERRAR SOLICITUD\s+([0-9a-f-]{8,36})(?:\s*:\s*(.{1,300}))?$/i);
   return match ? { idPrefix: match[1].toLowerCase(), note: (match[2] || "Cerrada por el equipo.").trim() } : null;
 }
