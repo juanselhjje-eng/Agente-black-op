@@ -9,6 +9,9 @@ El módulo `src/integrations/blackops-api.js` implementa únicamente esas consul
 
 No implementa escritura, autenticación, pagos, inventario ni lectura privada de reservas. No inferir disponibilidad final sin aplicar márgenes y bloqueos.
 
+## Monitor de página
+Configurar `WEBSITE_MONITOR_URL` con la URL pública real y `WEBSITE_MONITOR_INTERVAL_MS` (mínimo 30 segundos; por defecto 5 minutos). El monitor hace GET con timeout, registra código HTTP/latencia y detecta cambios de estado. Si se habilitan alertas al dueño, notifica caída y recuperación. No ejecuta transacciones ni comprueba el flujo completo de reservas. Endpoint interno: `GET /health/website`.
+
 ## Memoria del dueño
 Solo el número autenticado en `OWNER_WHATSAPP_NUMBER` puede enseñar reglas.
 - Mensaje natural: el Secretario clasifica la instrucción y guarda una guía.
@@ -27,9 +30,12 @@ La implementación real necesita conocer y conectar el repositorio, CMS o constr
 ## Respuesta del dueño a una escalación
 Formato:
 ```
-RESPONDER <UUID_DE_LA_CONSULTA>: texto de respuesta
+RESPONDER <UUID_DE_LA_CONSULTA>: texto
 ```
 Solo el dueño configurado puede contestar consultas pendientes; el Secretario asocia la respuesta al caso y la reenvía al cliente.
+
+## Seguridad del webhook
+En producción se exige `WHATSAPP_APP_SECRET`; sin él el endpoint rechaza los webhooks. Cuando existe, se valida la firma HMAC antes de procesar el cuerpo.
 
 ## Estado
 No hay conexión de escritura a la web, despliegue productivo ni credenciales reales. No afirmar que cambios o integraciones se han ejecutado hasta verificarlos.
