@@ -9,6 +9,13 @@ function extractMessages(payload) {
   return messages;
 }
 const normalizeNumber = value => String(value || "").replace(/\D/g, "");
+export function parseAvailabilityCommand(text) {
+  const match = String(text || "").trim().match(/^DISPONIBILIDAD:\\s*(\\d{4}-\\d{2}-\\d{2})(?:\\s+(standard|tactical|elite))?(?:\\s+(\\d{1,2}))?$/i);
+  if (!match) return null;
+  const players = Number(match[3] || 2);
+  if (!Number.isInteger(players) || players < 2 || players > 10) return null;
+  return { date: match[1], packageType: (match[2] || "standard").toLowerCase(), players };
+}
 export function parseOwnerReply(text) {
   const match = String(text || "").trim().match(/^RESPONDER\s+([0-9a-f-]{36})\s*[:|-]\s*([\s\S]+)$/i);
   return match ? { escalationId: match[1], answer: match[2].trim() } : null;
@@ -73,7 +80,7 @@ export function createSecretary({ config, store, whatsapp }) {
     if (availabilityCommand) {
       const [, date, packageType = "standard", playersText = "2"] = availabilityCommand;
       try {
-        const result = await subagents.supervisorWebAgenda.planAvailability({ from: date, packageType: packageType.toLowerCase(), players: Number(playersText) });
+        const result = await subagents.supervisorWebAgenda.planAvailability({ from: date, packageType: packageType.toLowerCase(), players });
         if (result.status !== "verified_against_public_blocks") {
           await whatsapp.sendText(message.from, "DISPONIBILIDAD NO VERIFICADA: " + result.message);
         } else {
