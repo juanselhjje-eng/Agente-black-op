@@ -21,5 +21,6 @@ export const config = Object.freeze({
   blackopsApiBaseUrl: process.env.BLACKOPS_PUBLIC_API_BASE_URL || "",
   blackopsApiEnabled: process.env.BLACKOPS_API_ENABLED === "true",
   websiteMonitorUrl: process.env.WEBSITE_MONITOR_URL || "",
-  websiteMonitorIntervalMs: Math.max(30000, number(process.env.WEBSITE_MONITOR_INTERVAL_MS, 300000))
+  websiteMonitorIntervalMs: Math.max(30000, number(process.env.WEBSITE_MONITOR_INTERVAL_MS, 300000)),
+  reportTimeZone: process.env.REPORT_TIMEZONE || "America/Bogota"
 });
