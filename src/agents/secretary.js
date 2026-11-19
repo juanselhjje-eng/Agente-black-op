@@ -60,7 +60,12 @@ export function createSecretary({ config, store, whatsapp }) {
         });
         continue;
       }
-      if (isCustomerPaymentInfoRequest(message.text)) {\n        await whatsapp.sendText(message.from, customerPaymentInstructionsMessage());\n        await store.audit({ type: "customer_payment_instructions_sent" });\n        continue;\n      }\n      const cancellationId = parseCustomerReservationCancellation(message.text);
+      if (isCustomerPaymentInfoRequest(message.text)) {
+        await whatsapp.sendText(message.from, customerPaymentInstructionsMessage());
+        await store.audit({ type: "customer_payment_instructions_sent" });
+        continue;
+      }
+      const cancellationId = parseCustomerReservationCancellation(message.text);
       if (cancellationId) {
         const requests = await store.listReservationRequests({ activeOnly: false });
         const matches = requests.filter(item => item.id.startsWith(cancellationId));
