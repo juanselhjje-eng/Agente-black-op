@@ -1,4 +1,3 @@
-const ALERT_TYPES = new Set(["owner_web_research_failed","owner_availability_query_failed","owner_escalation_timeout"]);
 const FAILURE_TYPES = new Set(["website_status_changed","owner_web_research_failed","owner_availability_query_failed","owner_escalation_timeout","subagent_error","webhook_processing_failed"]);
 
 export function summarizeAuditEvents(events = []) {
