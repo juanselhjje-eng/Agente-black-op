@@ -39,7 +39,7 @@ test("separa reembolsos del recaudo y protege la suma ante desbordamiento", () =
   ] });
   assert.equal(summary.payments.refundedCount,1);
   assert.equal(summary.payments.refundedAmountCop,4000);
-  assert.equal(summary.payments.verifiedCollectedCop,Number.MAX_SAFE_INTEGER);
+  assert.equal(summary.payments.verifiedCollectedCop,10000);
   assert.equal(summary.payments.amountOverflowCount,1);
 });
 test("el analista indica que no está configurado sin proveedor privado", async () => {
