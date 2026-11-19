@@ -22,5 +22,8 @@ export const config = Object.freeze({
   blackopsApiEnabled: process.env.BLACKOPS_API_ENABLED === "true",
   websiteMonitorUrl: process.env.WEBSITE_MONITOR_URL || "",
   websiteMonitorIntervalMs: Math.max(30000, number(process.env.WEBSITE_MONITOR_INTERVAL_MS, 300000)),
-  reportTimeZone: process.env.REPORT_TIMEZONE || "America/Bogota"
+  reportTimeZone: process.env.REPORT_TIMEZONE || "America/Bogota",
+  ownerReportsEnabled: process.env.OWNER_REPORTS_ENABLED === "true",
+  ownerDailyReportTime: /^([01]\\d|2[0-3]):[0-5]\\d$/.test(process.env.OWNER_DAILY_REPORT_TIME || "") ? process.env.OWNER_DAILY_REPORT_TIME : "08:00",
+  ownerWeeklyReportTime: /^([01]\\d|2[0-3]):[0-5]\\d$/.test(process.env.OWNER_WEEKLY_REPORT_TIME || "") ? process.env.OWNER_WEEKLY_REPORT_TIME : "08:15"
 });
