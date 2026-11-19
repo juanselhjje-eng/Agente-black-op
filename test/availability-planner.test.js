@@ -25,7 +25,8 @@ test("no declara disponibilidad si el contrato es desconocido", () => {
   assert.equal(result.status,"unverified"); assert.equal(result.slots.length,0);
 });
 test("valida fechas, rango, jugadores y paquete", () => {
-  assert.throws(()=>planPublicAvailability({from:"20-11-2026",publicAvailability:empty}),/Rango/);\n  assert.throws(()=>planPublicAvailability({from:"2026-99-99",publicAvailability:empty}),/Fecha calendario/);
+  assert.throws(()=>planPublicAvailability({from:"20-11-2026",publicAvailability:empty}),/Rango/);
+  assert.throws(()=>planPublicAvailability({from:"2026-99-99",publicAvailability:empty}),/Fecha calendario/);
   assert.throws(()=>planPublicAvailability({from:"2026-11-20",to:"2027-01-01",publicAvailability:empty}),/31 días/);
   assert.throws(()=>planPublicAvailability({from:"2026-11-20",players:1,publicAvailability:empty}),/2 y 10/);
   assert.throws(()=>planPublicAvailability({from:"2026-11-20",packageType:"gold",publicAvailability:empty}),/Paquete/);
