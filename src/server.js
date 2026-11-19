@@ -6,20 +6,31 @@ import { createWhatsAppClient } from "./integrations/whatsapp.js";
 import { verifyWhatsAppSignature } from "./integrations/whatsapp-signature.js";
 import { createWebsiteMonitor } from "./integrations/website-monitor.js";
 import { createStore } from "./storage/json-store.js";
+import { createPostgresStore } from "./storage/postgres-store.js";
 import { startEscalationWorker } from "./workers/escalation-worker.js";
 import { startWebsiteMonitorWorker } from "./workers/website-monitor-worker.js";
 
 const app = express();
-const store = createStore(config.dataDir);
+const store = config.databaseUrl
+  ? createPostgresStore({ connectionString: config.databaseUrl, max: config.pgPoolMax })
+  : createStore(config.dataDir);
+await store.init?.();
+
 const whatsapp = createWhatsAppClient(config);
 const secretary = createSecretary({ config, store, whatsapp });
 const websiteMonitor = createWebsiteMonitor({ url: config.websiteMonitorUrl });
 
-app.get("/health", (_req, res) => {
+app.get("/health", async (_req, res) => {
+  let database = "json-local";
+  if (config.databaseUrl) {
+    try { await store.init(); database = "postgresql"; }
+    catch { return res.status(503).json({ status: "degraded", database: "unavailable" }); }
+  }
   res.status(200).json({
     status: "ok",
     service: "agente-black-ops",
     role: "secretario-principal",
+    storage: database,
     subagents: ["atencion-whatsapp", "supervisor-web-agenda", "investigador-web", "analista-administrativo", "revisor", "auditor-general"],
     integrations: {
       gemini: Boolean(config.geminiApiKey),
@@ -33,7 +44,7 @@ app.get("/health", (_req, res) => {
 
 app.get("/health/website", async (_req, res) => {
   const latest = await store.getLatestWebsiteCheck();
-  res.status(latest ? 200 : 503).json({ configured: websiteMonitor.isConfigured(), latest });
+  res.status(latest?.ok ? 200 : 503).json({ configured: websiteMonitor.isConfigured(), latest });
 });
 
 app.get("/", (_req, res) => res.json({
@@ -73,10 +84,17 @@ const server = app.listen(config.port, config.host, () => {
 });
 const stopEscalationWorker = startEscalationWorker({ store, whatsapp, config });
 const stopWebsiteMonitor = startWebsiteMonitorWorker({ monitor: websiteMonitor, store, whatsapp, config });
+let shuttingDown = false;
 const shutdown = () => {
+  if (shuttingDown) return;
+  shuttingDown = true;
   stopEscalationWorker();
   stopWebsiteMonitor();
-  server.close(() => process.exit(0));
+  server.close(async () => {
+    try { await store.close?.(); }
+    catch (error) { console.error("Error cerrando almacenamiento:", error); }
+    process.exit(0);
+  });
 };
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
