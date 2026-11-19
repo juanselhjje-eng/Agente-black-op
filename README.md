@@ -15,6 +15,9 @@ Incluye backend, webhook WhatsApp, Gemini, consulta de API pública, escalamient
 
 **Aún no está conectado a servicios reales ni desplegado.** WhatsApp requiere credenciales Meta; Gemini requiere API key; el monitor requiere URL. La página no se modifica todavía: falta conectar el repositorio/CMS real y staging. Los reportes de ventas, pagos, inventario y reservas privadas requieren API autenticada del negocio.
 
+## Reportes operativos
+El dueño puede enviar por WhatsApp `RESUMEN HOY` o `RESUMEN SEMANA` para recibir métricas registradas de mensajes, escalaciones, disponibilidad HTTP y solicitudes de cambios web. El reporte no estima ventas, pagos, inventario ni reservas privadas: esos datos requieren una API autenticada del negocio. La zona horaria predeterminada es `America/Bogota` (`REPORT_TIMEZONE`).
+
 ## Almacenamiento y despliegue
 - Desarrollo local: JSON con `DATA_DIR`.
 - PostgreSQL: definir `DATABASE_URL`; el esquema se inicializa al arrancar.
