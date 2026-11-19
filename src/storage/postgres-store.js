@@ -133,7 +133,7 @@ export function createPostgresStore({ connectionString, pool, max = 10 }) {
       const r = await query(sql); return r.rows.map(row => row.data);
     },
     async updateReservationRequest(id, status, details = {}) {
-      if (!["owner_contacted", "closed"].includes(status)) return null;
+      if (!["owner_contacted", "rejected", "cancelled_by_customer", "closed"].includes(status)) return null;
       const client = await db.connect();
       try {
         await client.query("BEGIN");
