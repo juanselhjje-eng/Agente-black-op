@@ -119,7 +119,13 @@ El Secretario no debe delegar su responsabilidad final: antes de comunicar infor
 10. Las consultas al dueño registran pregunta, cliente/conversación relacionada, hora de inicio, vencimiento, estado y respuesta recibida.
 11. El Auditor genera trazabilidad sin exponer datos de clientes innecesarios.
 
-## 4. Flujo de escalamiento al dueño: regla de dos minutos
+## 4. Memoria operativa y aprendizaje del dueño
+
+El Secretario debe aprender de las instrucciones del dueño y recordarlas en futuras conversaciones. El dueño autenticado puede explicar en lenguaje natural cómo quiere que se atienda una pregunta, qué información priorizar, cómo presentar los paquetes o qué proceso seguir. El módulo de aprendizaje identifica instrucciones estables, las guarda en memoria persistente y confirma al dueño qué regla entendió. Antes de responder a un cliente, Atención WhatsApp recibe las guías activas. El dueño puede consultar las guías con `MEMORIAS`, guardar una explícitamente con `APRENDER: ...` y desactivar una con `OLVIDAR MEMORIA ID_CORTO`.
+
+Las guías del dueño afinan estilo, explicación y proceso, pero no pueden autorizar información inventada, confirmaciones falsas, divulgación de datos privados ni acciones sin permisos. El aprendizaje natural depende de Gemini; el comando explícito `APRENDER:` funciona sin Gemini. La memoria actual se almacena en JSON local de desarrollo y deberá migrarse a base de datos de producción con copias de seguridad. No guardar contraseñas, tokens, claves, datos bancarios secretos ni datos personales sensibles.
+
+## 5. Flujo de escalamiento al dueño: regla de dos minutos
 
 Cuando Atención WhatsApp no encuentre una respuesta respaldada:
 1. Crear un caso de consulta pendiente con identificador y marca de tiempo.
