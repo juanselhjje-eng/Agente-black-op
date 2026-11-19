@@ -18,8 +18,8 @@ export function getDueOwnerReports(now, { timeZone = "America/Bogota", dailyTime
   const p = localClock(now, timeZone);
   const dateKey = p.year + "-" + p.month + "-" + p.day;
   const due = [];
-  if (p.hour + ":" + p.minute === dailyTime) due.push({ period: "daily", key: "daily:" + dateKey });
-  if (p.weekday === "Mon" && p.hour + ":" + p.minute === weeklyTime) due.push({ period: "weekly", key: "weekly:" + mondayKey(p) });
+  if (p.hour + ":" + p.minute >= dailyTime) due.push({ period: "daily", key: "daily:" + dateKey });
+  if (p.weekday === "Mon" && p.hour + ":" + p.minute >= weeklyTime) due.push({ period: "weekly", key: "weekly:" + mondayKey(p) });
   return due;
 }
 export function startOwnerReportWorker({ store, whatsapp, config, nowProvider = () => new Date(), intervalMs = 30000, runOnStart = true }) {
