@@ -1,7 +1,7 @@
 # Estado real del proyecto Black Ops Paintball
 
 **Corte:** 19 de noviembre de 2026  
-**Estimación global corregida:** aproximadamente **42%** de alcance funcional.  
+**Estimación global corregida:** aproximadamente **43%** de alcance funcional.  
 **Estado:** prototipo backend en desarrollo; no está listo para producción.
 
 ## Cómo se calcula el avance
@@ -24,7 +24,7 @@ La estimación es orientativa y debe revisarse al cerrar cada bloque de aceptaci
 | Reportes al dueño | Reportes manuales y programación diaria/semanal opt-in; métricas solo del propio agente | 65% |
 | Consulta de configuración y disponibilidad | Adaptador público y planificador de candidatos por paquete/jugadores, validación de intervalos y 30 min de limpieza; contrato real aún por validar y sin escritura de reservas | 40% |
 | Reservas privadas y calendario operativo | Sin API autenticada ni flujo transaccional implementado | 0% |
-| Ventas, ingresos y pagos | Analista determinista implementado para snapshots normalizados; falta proveedor autenticado y conciliación real | 25% |
+| Ventas, ingresos y pagos | Analista determinista separa recaudos verificados de reembolsos y protege sumas COP contra desbordamiento; falta proveedor autenticado y conciliación real | 35% |
 | Inventario y alertas de reposición | Cálculo de mínimos implementado sobre snapshot; falta conectar fuente real de existencias y movimientos | 25% |
 | Investigación de competencia y tendencias | Subagente Gemini con Google Search grounding, enlaces HTTPS y advertencia si faltan fuentes; falta validar cuenta/uso real y mejorar trazabilidad | 45% |
 | Marketing e Instagram | Investigación fundamentada disponible como insumo; sin generador de campañas ni Instagram Graph API | 10% |
@@ -48,7 +48,7 @@ El proyecto tiene una base técnica útil, pero la mayor parte de las funciones 
 - Reportes operativos manuales y envío automático diario/semanal configurable, desactivado por defecto.
 - Orquestador central conectado al flujo de atención y revisor determinista de respuestas con pruebas automatizadas.
 - Investigador web con Gemini Google Search grounding, extracción/deduplicación de fuentes HTTPS y comando del dueño `INVESTIGAR:`.
-- Analista administrativo determinista para snapshots normalizados: reservas por estado, pagos verificados vs reportados e inventario bajo mínimo; sin fuente privada conectada.
+- Analista administrativo determinista para snapshots normalizados: reservas por estado, pagos reportados, recaudos confirmados y reembolsos separados; protege sumas COP contra desbordamiento e inventario bajo mínimo; sin fuente privada conectada.
 - Planificador conservador de disponibilidad pública con paquetes, jugadores, bloqueos, márgenes de limpieza y parser validado del comando del dueño; no confirma ni bloquea reservas.
 - Auditor general determinista, con resumen de eventos, hallazgos operativos y protección contra exposición de mensajes/teléfonos; comando `AUDITORIA`.
 - Dockerfile, Compose, CI y documentación inicial.
