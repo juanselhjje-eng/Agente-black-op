@@ -37,6 +37,11 @@ Seguir [Base de datos y contenedores](BASE_DE_DATOS_Y_CONTENEDORES.md). En Windo
 - Adaptador PostgreSQL con índices, transacciones y pool; JSON para desarrollo.
 - Dockerfile no-root, Compose con base de datos privada y healthcheck de PostgreSQL.
 
+## Reportes operativos al dueño
+El dueño puede solicitar por WhatsApp `RESUMEN HOY` o `RESUMEN SEMANA`. El sistema calcula los periodos en `REPORT_TIMEZONE` (por defecto `America/Bogota`) y consolida mensajes recibidos/enviados, consultas escaladas, respuestas y vencimientos, comprobaciones HTTP y solicitudes de cambios web pendientes. Los contadores se basan en los eventos que el agente ha logrado registrar; una disponibilidad HTTP alta no garantiza que el proceso de reservas funcione correctamente.
+
+Los reportes son bajo demanda, no se envían automáticamente. Ventas, pagos, inventario y reservas privadas se muestran como no disponibles hasta integrar una API autenticada con permisos de lectura. No se derivan ingresos de las reservas ni se consideran comprobantes reportados como pagos verificados.
+
 ## Limitaciones
 - Las credenciales Meta/Gemini y la URL real no están configuradas.
 - El monitor HTTP no comprueba el flujo completo de reservas.
