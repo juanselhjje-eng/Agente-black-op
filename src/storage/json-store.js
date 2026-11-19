@@ -5,8 +5,8 @@ export function createStore(directory) {
   const file = path.join(directory, "state.json");
   let queue = Promise.resolve();
   async function read() {
-    try { return { messages: [], escalations: [], audit: [], ownerMemories: [], ...JSON.parse(await fs.readFile(file, "utf8")) }; }
-    catch (error) { if (error.code === "ENOENT") return { messages: [], escalations: [], audit: [], ownerMemories: [] }; throw error; }
+    try { return { messages: [], escalations: [], audit: [], ownerMemories: [], webChangeRequests: [], ...JSON.parse(await fs.readFile(file, "utf8")) }; }
+    catch (error) { if (error.code === "ENOENT") return { messages: [], escalations: [], audit: [], ownerMemories: [], webChangeRequests: [] }; throw error; }
   }
   async function write(state) {
     await fs.mkdir(directory, { recursive: true });
@@ -44,8 +44,20 @@ export function createStore(directory) {
       if (!text) throw new TypeError("La memoria no puede estar vacía.");
       const duplicate = state.ownerMemories.find(item => item.active && item.text.toLowerCase() === text.toLowerCase());
       if (duplicate) return { ...duplicate, duplicate: true };
-      const item = { id: randomUUID(), category: input.category || "guia_de_atencion", text, sourceMessage: input.sourceMessage || "", active: true, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+      const item = { id: randomUUID(), category: input.category || "guia_de_atencion", text, sourceMessage: input.sourceMessage || "", active: true, revisions: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
       state.ownerMemories.push(item); return item;
+    }),
+    updateOwnerMemory: (id, input) => mutate(state => {
+      const item = state.ownerMemories.find(entry => entry.id === id && entry.active);
+      const text = String(input.text || "").trim();
+      if (!item || !text) return null;
+      if (item.text.toLowerCase() === text.toLowerCase()) return { ...item, duplicate: true };
+      item.revisions = [...(item.revisions || []), { text: item.text, category: item.category, replacedAt: new Date().toISOString(), sourceMessage: item.sourceMessage || "" }];
+      item.text = text;
+      item.category = input.category || item.category;
+      item.sourceMessage = input.sourceMessage || item.sourceMessage;
+      item.updatedAt = new Date().toISOString();
+      return item;
     }),
     async listOwnerMemories({ activeOnly = true } = {}) {
       return (await read()).ownerMemories.filter(item => !activeOnly || item.active);
@@ -54,6 +66,22 @@ export function createStore(directory) {
       const item = state.ownerMemories.find(entry => entry.id === id && entry.active);
       if (!item) return null;
       item.active = false; item.updatedAt = new Date().toISOString(); return item;
+    }),
+    createWebChangeRequest: input => mutate(state => {
+      const item = { id: randomUUID(), status: "pending_review", createdAt: new Date().toISOString(), requestedBy: "owner", ...input };
+      state.webChangeRequests.push(item); return item;
+    }),
+    async listWebChangeRequests({ activeOnly = true } = {}) {
+      const items = (await read()).webChangeRequests;
+      return items.filter(item => !activeOnly || ["pending_review", "approved_pending_integration"].includes(item.status));
+    },
+    approveWebChangeRequest: (id, approvedBy) => mutate(state => {
+      const item = state.webChangeRequests.find(entry => entry.id === id && entry.status === "pending_review");
+      if (!item) return null;
+      item.status = "approved_pending_integration";
+      item.approvedBy = approvedBy;
+      item.approvedAt = new Date().toISOString();
+      return item;
     }),
     audit: event => mutate(state => {
       state.audit.push({ ...event, at: new Date().toISOString() }); state.audit = state.audit.slice(-10000);
