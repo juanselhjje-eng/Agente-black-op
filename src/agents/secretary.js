@@ -63,15 +63,6 @@ export function createSecretary({ config, store, whatsapp }) {
       await whatsapp.sendText(message.from, saved.duplicate ? "Esa guía ya estaba guardada y la seguiré aplicando." : "Entendido. Aprendí y guardé esta indicación para futuras conversaciones con clientes:\n“" + saved.text + "”\nPuedes revisar mis guías con MEMORIAS.");
       return;
     }
-    const reply = parseOwnerReply(text);
-    if (reply) {
-      const escalation = await store.closeEscalation(reply.escalationId, "answered", { ownerAnswer: reply.answer, answeredBy: message.from });
-      if (!escalation) { await whatsapp.sendText(message.from, "No encontré esa consulta pendiente. Puede haber vencido o respondido."); return; }
-      await whatsapp.sendText(escalation.customer, "El equipo de Black Ops nos confirma: " + reply.answer);
-      await whatsapp.sendText(message.from, "Respuesta enviada al cliente y consulta cerrada.");
-      await store.audit({ type: "owner_escalation_answered", escalationId: reply.escalationId });
-      return;
-    }
     await whatsapp.sendText(message.from, learned.reason || "Te escucho. Si quieres enseñarme una regla, explícame qué debo recordar o usa APRENDER: seguido de la instrucción.");
   }
   async function notifyOwner(message, prefix) {
