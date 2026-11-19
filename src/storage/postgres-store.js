@@ -23,6 +23,10 @@ export function createPostgresStore({ connectionString, pool, max = 10 }) {
       created_at TIMESTAMPTZ NOT NULL, updated_at TIMESTAMPTZ NOT NULL
     );
     CREATE INDEX IF NOT EXISTS blackops_memories_active_idx ON blackops_owner_memories(active, updated_at DESC);
+    CREATE TABLE IF NOT EXISTS blackops_reservation_requests (
+      id UUID PRIMARY KEY, status TEXT NOT NULL, data JSONB NOT NULL, created_at TIMESTAMPTZ NOT NULL, updated_at TIMESTAMPTZ NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS blackops_reservation_requests_status_idx ON blackops_reservation_requests(status, created_at DESC);
     CREATE TABLE IF NOT EXISTS blackops_web_changes (
       id UUID PRIMARY KEY, status TEXT NOT NULL, data JSONB NOT NULL, created_at TIMESTAMPTZ NOT NULL,
       approved_at TIMESTAMPTZ, approved_by TEXT
@@ -115,6 +119,30 @@ export function createPostgresStore({ connectionString, pool, max = 10 }) {
     async deactivateOwnerMemory(id) {
       const r = await query("UPDATE blackops_owner_memories SET active=FALSE,updated_at=NOW() WHERE id=$1 AND active=TRUE RETURNING *", [id]);
       return r.rowCount ? memoryRow(r.rows[0]) : null;
+    },
+    async createReservationRequest(input) {
+      const now = new Date().toISOString();
+      const item = { id: randomUUID(), status: "pending_owner_review", createdAt: now, updatedAt: now, ...input };
+      await query("INSERT INTO blackops_reservation_requests(id,status,data,created_at,updated_at) VALUES($1,$2,$3,$4,$5)", [item.id,item.status,item,now,now]);
+      return item;
+    },
+    async listReservationRequests({ activeOnly = true } = {}) {
+      const sql = activeOnly
+        ? "SELECT data FROM blackops_reservation_requests WHERE status IN ('pending_owner_review','owner_contacted') ORDER BY created_at DESC LIMIT 200"
+        : "SELECT data FROM blackops_reservation_requests ORDER BY created_at DESC LIMIT 200";
+      const r = await query(sql); return r.rows.map(row => row.data);
+    },
+    async updateReservationRequest(id, status, details = {}) {
+      if (!["owner_contacted", "closed"].includes(status)) return null;
+      const client = await db.connect();
+      try {
+        await client.query("BEGIN");
+        const found = await client.query("SELECT data FROM blackops_reservation_requests WHERE id=$1 AND status IN ('pending_owner_review','owner_contacted') FOR UPDATE", [id]);
+        if (!found.rowCount) { await client.query("ROLLBACK"); return null; }
+        const item = { ...found.rows[0].data, ...details, status, updatedAt: new Date().toISOString() };
+        await client.query("UPDATE blackops_reservation_requests SET status=$2,data=$3,updated_at=$4 WHERE id=$1", [id,status,item,item.updatedAt]);
+        await client.query("COMMIT"); return item;
+      } catch(error) { await client.query("ROLLBACK"); throw error; } finally { client.release(); }
     },
     async createWebChangeRequest(input) {
       const item = { id: randomUUID(), status: "pending_review", createdAt: new Date().toISOString(), requestedBy: "owner", ...input };
