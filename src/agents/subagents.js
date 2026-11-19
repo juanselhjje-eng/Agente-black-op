@@ -1,4 +1,4 @@
-<sub>import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import { createBlackOpsPublicApi } from "../integrations/blackops-api.js";
 import { PROJECT_CONTEXT } from "./project-context.js";
 import { createWebResearcher } from "./web-researcher.js";
@@ -12,6 +12,7 @@ La API pública documentada solo permite consultar configuración y disponibilid
 
 export function createSubagents(config) {
   const ai = config.geminiApiKey ? new GoogleGenAI({ apiKey: config.geminiApiKey }) : null;
+  const researcher = createWebResearcher({ ai, model: config.geminiModel });
   const businessApi = createBlackOpsPublicApi(config);
   async function answerCustomer(message, ownerMemories = []) {
     if (!ai) return { text: "¡Hola! Gracias por escribir a Black Ops Paintball. En este momento el asistente automático no está disponible. Ya solicitamos apoyo al equipo; si necesitas atención inmediata, escríbenos al 311 334 8774.", needsOwner: true, urgent: false };
@@ -58,4 +59,3 @@ export function createSubagents(config) {
     aprendizaje: { learnFromOwner }
   };
 }
-</sub>
