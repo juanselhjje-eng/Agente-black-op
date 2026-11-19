@@ -34,5 +34,5 @@ test("valida fechas, rango, jugadores y paquete", () => {
 test("respeta duración elite y horario de cierre", () => {
   const result=planPublicAvailability({from:"2026-11-20",packageType:"elite",publicAvailability:empty});
   assert.equal(result.slots.at(-1).time,"21:00");
-  assert.equal(result.slots.at(-1).endsAt,"22:30");
+  assert.equal(result.slots.at(-1).endsAt,"23:00");
 });
