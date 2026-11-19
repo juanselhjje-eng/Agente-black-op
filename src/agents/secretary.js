@@ -1,4 +1,5 @@
 import { createSubagents } from "./subagents.js";
+import { createOrchestrator } from "./orchestrator.js";
 import { buildOwnerReport } from "../reports/owner-report.js";
 function extractMessages(payload) {
   const messages = [];
@@ -14,6 +15,7 @@ export function parseOwnerReply(text) {
 }
 export function createSecretary({ config, store, whatsapp }) {
   const subagents = createSubagents(config);
+  const orchestrator = createOrchestrator({ support: subagents.atencionWhatsApp });
   async function handleWebhook(payload) {
     for (const message of extractMessages(payload)) {
       if (!await store.addMessage({ id: message.id, from: message.from, text: message.text })) continue;
@@ -22,7 +24,7 @@ export function createSecretary({ config, store, whatsapp }) {
         await handleOwnerMessage(message); continue;
       }
       let result;
-      try { result = await subagents.atencionWhatsApp.answer(message.text, await store.listOwnerMemories()); }
+      try { result = await orchestrator.handleCustomerMessage(message.text, await store.listOwnerMemories()); }
       catch (error) {
         console.error("Subagente atención falló:", error);
         result = { text: "En este momento no puedo verificar esa información. Para atención directa, escríbenos al 311 334 8774.", needsOwner: true, urgent: false };
@@ -143,5 +145,5 @@ export function createSecretary({ config, store, whatsapp }) {
     await notifyOwner(message, "Consulta pendiente " + item.id + ". Responde antes de 2 minutos con:\nRESPONDER " + item.id + ": tu respuesta\nCliente: " + message.from + "\nPregunta: " + message.text);
     return item;
   }
-  return { handleWebhook, handleOwnerMessage, subagents };
+  return { handleWebhook, handleOwnerMessage, subagents, orchestrator };
 }
