@@ -1,10 +1,10 @@
-const DATE = /^\\d{4}-\\d{2}-\\d{2}$/;
+const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 export function createBlackOpsPublicApi(config, fetchImpl = fetch) {
   const enabled = Boolean(config.blackopsApiEnabled && config.blackopsApiBaseUrl);
   async function request(path) {
     if (!enabled) throw new Error("La API pública de Black Ops no está habilitada.");
-    const base = config.blackopsApiBaseUrl.replace(/\\/$/, "");
+    const base = config.blackopsApiBaseUrl.replace(/\/$/, "");
     const response = await fetchImpl(base, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
