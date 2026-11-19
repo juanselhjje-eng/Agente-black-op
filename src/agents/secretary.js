@@ -76,9 +76,10 @@ export function createSecretary({ config, store, whatsapp }) {
       }
       return;
     }
-    const availabilityCommand = text.match(/^DISPONIBILIDAD:\s*(\d{4}-\d{2}-\d{2})(?:\s+(standard|tactical|elite))?(?:\s+(\d{1,2}))?$/i);
+    const availabilityCommand = parseAvailabilityCommand(text);
     if (availabilityCommand) {
-      const [, date, packageType = "standard", playersText = "2"] = availabilityCommand;
+      const { date, packageType, players } = availabilityCommand;
+      const playersText = String(players);
       try {
         const result = await subagents.supervisorWebAgenda.planAvailability({ from: date, packageType: packageType.toLowerCase(), players });
         if (result.status !== "verified_against_public_blocks") {
