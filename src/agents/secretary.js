@@ -1,7 +1,7 @@
 import { createSubagents } from "./subagents.js";
 import { createOrchestrator } from "./orchestrator.js";
 import { buildOwnerReport } from "../reports/owner-report.js";
-import { parseCustomerReservationRequest, parseCustomerReservationCancellation, parseOwnerReservationRejection, reservationRequestCustomerMessage, reservationRequestOwnerMessage, reservationRequestStatusMessage } from "./reservation-workflow.js";
+import { parseCustomerReservationRequest, parseCustomerReservationCancellation, parseOwnerReservationRejection, parseOwnerReservationClosure, reservationRequestCustomerMessage, reservationRequestOwnerMessage, reservationRequestStatusMessage } from "./reservation-workflow.js";
 function extractMessages(payload) {
   const messages = [];
   for (const entry of payload?.entry || []) for (const change of entry?.changes || []) for (const message of change?.value?.messages || []) {
@@ -163,6 +163,19 @@ export function createSecretary({ config, store, whatsapp }) {
       }
       return;
     }
+    const closure = parseOwnerReservationClosure(text);
+    if (closure) {
+      const requests = await store.listReservationRequests({ activeOnly: false });
+      const matches = requests.filter(item => item.id.startsWith(closure.idPrefix));
+      const item = matches.length === 1 ? matches[0] : null;
+      const updated = item ? await store.updateReservationRequest(item.id, "closed", { resolutionNote: closure.note, resolvedBy: message.from }) : null;
+      if (updated) {
+        await whatsapp.sendText(updated.customer, reservationRequestStatusMessage(updated) + " Motivo: " + closure.note);
+        await store.audit({ type: "reservation_request_closed", requestId: updated.id });
+      }
+      await whatsapp.sendText(message.from, updated ? "Solicitud " + updated.id.slice(0,8) + " cerrada y notificada al cliente. No se modificó ninguna reserva confirmada." : "No encontré una solicitud abierta única con ese código.");
+      return;
+    }
     const rejection = parseOwnerReservationRejection(text);
     if (rejection) {
       const requests = await store.listReservationRequests({ activeOnly: false });
@@ -179,7 +192,7 @@ export function createSecretary({ config, store, whatsapp }) {
     if (/^RESERVAS PENDIENTES$/i.test(text)) {
       const items = await store.listReservationRequests();
       const lines = items.slice(0,15).map(item => item.id.slice(0,8) + " — " + item.date + " " + item.time + " — " + item.players + " jugadores — " + item.packageType + " — " + item.status);
-      await whatsapp.sendText(message.from, lines.length ? "SOLICITUDES (no son reservas confirmadas):\n" + lines.join("\n") + "\nUsa CONTACTADO RESERVA ID, RECHAZAR SOLICITUD ID: motivo o el cliente puede cancelar con CANCELAR SOLICITUD ID." : "No hay solicitudes de reserva pendientes.");
+      await whatsapp.sendText(message.from, lines.length ? "SOLICITUDES (no son reservas confirmadas):\n" + lines.join("\n") + "\nUsa CONTACTADO RESERVA ID, RECHAZAR SOLICITUD ID: motivo, CERRAR SOLICITUD ID: nota o el cliente puede cancelar con CANCELAR SOLICITUD ID." : "No hay solicitudes de reserva pendientes.");
       return;
     }
     const contacted = text.match(/^CONTACTADO RESERVA\s+([0-9a-f-]{8,36})$/i);
