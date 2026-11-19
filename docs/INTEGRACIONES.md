@@ -71,3 +71,7 @@ DISPONIBILIDAD: 2026-11-20 tactical 4
 El resultado son candidatos calculados, no reservas bloqueadas ni confirmadas. La API pública documentada es de solo lectura, por lo que la disponibilidad puede cambiar antes de completar la reserva. No usar esta salida como promesa al cliente ni para marcar ventas.
 
 **Pendiente de validación externa:** el documento funcional describe los nombres de las listas de bloqueos, pero no proporciona un ejemplo íntegro de cada objeto. El planificador acepta alias explícitos comunes para inicio/fin y falla cerrado ante campos ausentes, fechas inválidas o estructura desconocida. Antes de habilitar en producción, contrastar con una respuesta real anonimizada del endpoint y probar cierres especiales, partidas abiertas, zonas horarias y reservas que cruzan medianoche.
+
+
+## Auditor general
+El módulo `src/agents/auditor.js` resume los últimos eventos de auditoría sin devolver mensajes, teléfonos ni datos personales. Cuenta tipos de evento e identifica alertas por caídas web, timeouts de escalamiento, fallos de investigación y errores de consulta de disponibilidad. El dueño puede solicitar por WhatsApp `AUDITORIA` o `AUDITORIA HOY`; ambos consultan las últimas 24 horas y presentan conteos/hallazgos. Es auditoría operativa basada en eventos existentes, no una certificación contable, revisión de transacciones privadas ni prueba de que un humano atendió cada caso.
