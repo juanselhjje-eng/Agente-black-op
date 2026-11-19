@@ -1,7 +1,7 @@
 # Estado real del proyecto Black Ops Paintball
 
 **Corte:** 19 de noviembre de 2026  
-**Estimación global corregida:** aproximadamente **38%** de alcance funcional.  
+**Estimación global corregida:** aproximadamente **40%** de alcance funcional.  
 **Estado:** prototipo backend en desarrollo; no está listo para producción.
 
 ## Cómo se calcula el avance
@@ -24,10 +24,10 @@ La estimación es orientativa y debe revisarse al cerrar cada bloque de aceptaci
 | Reportes al dueño | Reportes manuales y programación diaria/semanal opt-in; métricas solo del propio agente | 65% |
 | Consulta de configuración y disponibilidad | Adaptador a dos endpoints públicos documentados; contrato real aún por validar | 20% |
 | Reservas privadas y calendario operativo | Sin API autenticada ni flujo transaccional implementado | 0% |
-| Ventas, ingresos y pagos | Sin fuente administrativa ni conciliación | 0% |
-| Inventario y alertas de reposición | Sin modelo ni fuente de existencias/movimientos | 0% |
-| Investigación de competencia y tendencias | Subagente pendiente de integrar búsqueda, citas y registro de fuentes | 0% |
-| Marketing e Instagram | Sin generador de campañas integrado ni Instagram Graph API | 0% |
+| Ventas, ingresos y pagos | Analista determinista implementado para snapshots normalizados; falta proveedor autenticado y conciliación real | 25% |
+| Inventario y alertas de reposición | Cálculo de mínimos implementado sobre snapshot; falta conectar fuente real de existencias y movimientos | 25% |
+| Investigación de competencia y tendencias | Subagente Gemini con Google Search grounding, enlaces HTTPS y advertencia si faltan fuentes; falta validar cuenta/uso real y mejorar trazabilidad | 45% |
+| Marketing e Instagram | Investigación fundamentada disponible como insumo; sin generador de campañas ni Instagram Graph API | 10% |
 | Revisor y auditor general | Revisor determinista integrado a respuestas de clientes para urgencias, pagos y datos privados; auditoría de eventos existente, falta revisión de acciones y anomalías | 30% |
 | Despliegue Windows Server | Docker y guías iniciales; no hay servidor, dominio, HTTPS, instalación ni restauración probada | 15% |
 | Seguridad, operación y continuidad | HMAC opcional/obligatorio en producción, secretos por entorno, PostgreSQL y scripts; faltan pruebas de seguridad, backups reales y carga | 30% |
@@ -45,7 +45,7 @@ El proyecto tiene una base técnica útil, pero la mayor parte de las funciones 
 - Almacenamiento JSON y adaptador PostgreSQL.
 - Memoria del dueño y flujo de escalamiento.
 - Monitor HTTP con historial, alertas y consulta de estado.
-- Reportes operativos manuales y envío automático diario/semanal configurable, desactivado por defecto.\n- Orquestador central conectado al flujo de atención y revisor determinista de respuestas con pruebas automatizadas.
+- Reportes operativos manuales y envío automático diario/semanal configurable, desactivado por defecto.\n- Orquestador central conectado al flujo de atención y revisor determinista de respuestas con pruebas automatizadas.\n- Investigador web con Gemini Google Search grounding, extracción/deduplicación de fuentes HTTPS y comando del dueño `INVESTIGAR:`.\n- Analista administrativo determinista para snapshots normalizados: reservas por estado, pagos verificados vs reportados e inventario bajo mínimo; sin fuente privada conectada.
 - Dockerfile, Compose, CI y documentación inicial.
 - Pruebas automatizadas ejecutadas por GitHub Actions; esto no sustituye pruebas de integración contra Meta, Gemini, PostgreSQL real ni el sitio de reservas.
 
@@ -67,6 +67,6 @@ No se declarará 80% hasta que estén funcionales y probadas en entorno de integ
 
 1. Completar scheduler y validación de reportes programados.
 2. Implementar herramientas administrativas con contratos y permisos explícitos cuando el negocio entregue la API.
-3. Construir investigación de mercado con fuentes, fecha y trazabilidad.
+3. Conectar el proveedor administrativo autenticado y validar su contrato.\n4. Mejorar investigación de mercado con fechas y trazabilidad adicional.
 4. Ampliar revisor para verificar disponibilidad y operaciones autorizadas; completar auditoría de acciones y anomalías.
 5. Completar pruebas de integración, seguridad y despliegue.
