@@ -103,3 +103,6 @@ El cliente puede enviar `SOLICITAR RESERVA AAAA-MM-DD HH:MM JUGADORES PAQUETE`, 
 El cliente puede cancelar únicamente su propia solicitud aún abierta con `CANCELAR SOLICITUD ID_CORTO`. Se compara el número de WhatsApp remitente con el número que originó la solicitud y se exige que el código identifique un único registro. El dueño puede rechazar una solicitud con `RECHAZAR SOLICITUD ID_CORTO: motivo`; el sistema notifica al cliente y registra el evento. Los estados terminales (`rejected`, `cancelled_by_customer`, `closed`) no pueden reabrirse mediante estas acciones.
 
 Estas operaciones afectan solo solicitudes de contacto almacenadas por el asistente. No cancelan, cambian ni modifican una reserva confirmada en el calendario externo.
+
+
+El dueño también puede cerrar una solicitud abierta con `CERRAR SOLICITUD ID_CORTO: nota` (la nota es opcional). El cierre notifica al cliente y deja auditoría. Solo cierra la solicitud de contacto del asistente; no cancela una reserva confirmada en el calendario del negocio.
