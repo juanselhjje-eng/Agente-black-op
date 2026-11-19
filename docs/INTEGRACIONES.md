@@ -111,7 +111,7 @@ Este módulo no autentica usuarios, no accede a la cuenta web, no cancela reserv
 El Secretario reconoce afirmaciones explícitas como `Ya pagué $50.000 COP, adjunto el comprobante` y:
 - Responde al cliente que el aviso fue recibido, pero que el pago aún no está confirmado.
 - Si están habilitadas las alertas al dueño, envía un aviso con el número del cliente y el monto que este haya mencionado; no reenvía el texto ni almacena el comprobante en un módulo de pagos.
-- Registra un evento de auditoría sin guardar el contenido del mensaje ni datos bancarios.
+- Registra un evento de auditoría sin guardar el contenido del mensaje ni datos bancarios. El comando `AUDITORIA` muestra el conteo de reportes de pago que siguen pendientes de verificación, sin exponer datos personales.
 - No marca la reserva como pagada ni altera su estado.
 
 Las preguntas sobre cómo pagar no se clasifican como reportes. El aviso requiere que el equipo verifique el movimiento en la fuente administrativa. Todavía no hay integración para consultar pagos reales ni para recibir/almacenar comprobantes de forma segura.
