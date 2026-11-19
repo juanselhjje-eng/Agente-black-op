@@ -170,9 +170,11 @@ export function isCustomerPaymentInfoRequest(value) {
   const text = String(value || "").trim();
   if (!text || text.length > 1000 || parseCustomerPaymentReport(text)) return false;
   const normalized = text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-  return /\b(?:como|donde|cual|que|cuales)\b/.test(normalized) &&
-    /\b(?:pagar|pago|pagos|nequi|transferencia|consignar|consignacion|efectivo|anticipo|metodos de pago|medios de pago)\b/.test(normalized) ||
-    /\\b(?:medios de pago|metodos de pago|formas de pago|puedo pagar en efectivo)\\b/.test(normalized) ||\n    /\\b(?:aceptan|reciben)\\b.*\\b(?:nequi|efectivo|transferencia)\\b/.test(normalized);
+  const asksPayment = /\b(?:como|donde|cual|que|cuales)\b/.test(normalized) &&
+    /\b(?:pagar|pago|pagos|nequi|transferencia|consignar|consignacion|efectivo|anticipo|metodos de pago|medios de pago)\b/.test(normalized);
+  const asksAcceptedMethod = /\b(?:medios de pago|metodos de pago|formas de pago|puedo pagar en efectivo)\b/.test(normalized) ||
+    /\b(?:aceptan|reciben)\b.*\b(?:nequi|efectivo|transferencia)\b/.test(normalized);
+  return asksPayment || asksAcceptedMethod;
 }
 
 export function customerPaymentInstructionsMessage() {
