@@ -1,6 +1,7 @@
-import { GoogleGenAI } from "@google/genai";
+<sub>import { GoogleGenAI } from "@google/genai";
 import { createBlackOpsPublicApi } from "../integrations/blackops-api.js";
 import { PROJECT_CONTEXT } from "./project-context.js";
+import { createWebResearcher } from "./web-researcher.js";
 
 const KNOWLEDGE = `Black Ops Paintball es un campo de paintball táctico en Támesis, Antioquia, Colombia.
 Paquetes por jugador: Estándar 1h/100 bolas $35.000; Táctico 1,5h/150 bolas $50.000; Élite 2h/200 bolas $60.000.
@@ -50,10 +51,11 @@ export function createSubagents(config) {
   return {
     atencionWhatsApp: { answer: answerCustomer },
     supervisorWebAgenda: { isConfigured: businessApi.isEnabled, getPublicConfig: businessApi.getPublicConfig, getAvailability: businessApi.getAvailability },
-    investigadorWeb: { description: "Pendiente de integrar búsqueda web y fuentes verificables." },
+    investigadorWeb: researcher,
     analistaAdministrativo: { description: "Pendiente de API autenticada para ventas, pagos, reservas privadas e inventario." },
     revisor: { description: "Validación inicial de formato y políticas." },
     auditorGeneral: { description: "Auditoría de eventos y errores." },
     aprendizaje: { learnFromOwner }
   };
 }
+</sub>
