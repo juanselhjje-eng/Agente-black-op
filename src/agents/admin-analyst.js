@@ -1,5 +1,5 @@
 const RESERVATION_STATUSES = new Set(["pending_payment","payment_reported","scheduled","completed","cancelled","expired","overdue"]);
-const VERIFIED_PAYMENT_STATUSES = new Set(["verified","paid","approved","refunded"]);
+const COLLECTED_PAYMENT_STATUSES = new Set(["verified","paid","approved"]);
 const money = value => Number.isSafeInteger(value) && value >= 0 ? value : 0;
 
 function isoDate(value) {
@@ -12,8 +12,16 @@ export function summarizeAdminSnapshot(snapshot = {}) {
   const payments = Array.isArray(snapshot.payments) ? snapshot.payments : [];
   const inventory = Array.isArray(snapshot.inventory) ? snapshot.inventory : [];
   const normalizedReservations = reservations.filter(item => RESERVATION_STATUSES.has(item.status));
-  const verifiedPayments = payments.filter(item => VERIFIED_PAYMENT_STATUSES.has(item.status) && item.verifiedAt);
-  const revenueCop = verifiedPayments.reduce((sum, item) => sum + money(item.amountCop), 0);
+  const verifiedPayments = payments.filter(item => COLLECTED_PAYMENT_STATUSES.has(item.status) && isoDate(item.verifiedAt));
+  const refundedPayments = payments.filter(item => item.status === "refunded" && isoDate(item.refundedAt));
+  const sumSafeMoney = items => items.reduce((result, item) => {
+    const amount = money(item.amountCop);
+    if (!Number.isSafeInteger(result.total + amount)) { result.overflowCount += 1; return result; }
+    result.total += amount;
+    return result;
+  }, { total: 0, overflowCount: 0 });
+  const collected = sumSafeMoney(verifiedPayments);
+  const refunds = sumSafeMoney(refundedPayments);
   const reportedPayments = payments.filter(item => item.status === "reported").length;
   const inventoryAlerts = inventory.filter(item => Number.isFinite(item.quantity) && Number.isFinite(item.minimum) && item.quantity <= item.minimum)
     .map(item => ({ sku: String(item.sku || "").slice(0, 80), name: String(item.name || item.sku || "Artículo").slice(0, 120), quantity: item.quantity, minimum: item.minimum }));
@@ -27,12 +35,17 @@ export function summarizeAdminSnapshot(snapshot = {}) {
       records: payments.length,
       verifiedCount: verifiedPayments.length,
       reportedUnverifiedCount: reportedPayments,
-      verifiedRevenueCop: revenueCop
+      verifiedCollectedCop: collected.total,
+      refundedCount: refundedPayments.length,
+      refundedAmountCop: refunds.total,
+      amountOverflowCount: collected.overflowCount + refunds.overflowCount
     },
     inventory: { items: inventory.length, atOrBelowMinimum: inventoryAlerts },
     limitations: [
       "Solo se cuentan estados de reserva reconocidos.",
-      "Los ingresos suman únicamente pagos con estado verificado y verifiedAt.",
+      "Los recaudos confirmados incluyen solo pagos verificados, pagados o aprobados con verifiedAt válido.",
+      "Los reembolsos se reportan por separado y nunca se suman como recaudo.",
+      "Los importes que producirían desbordamiento de enteros seguros se excluyen y se contabilizan como anomalía.",
       "Los pagos reportados no se consideran ingresos confirmados.",
       "No se calculan impuestos, costos, utilidad ni ventas sin datos de origen."
     ]
