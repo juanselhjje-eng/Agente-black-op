@@ -7,6 +7,8 @@ export const config = Object.freeze({
   port: number(process.env.PORT, 3000),
   host: process.env.HOST || "127.0.0.1",
   dataDir: path.resolve(process.env.DATA_DIR || "./data"),
+  databaseUrl: process.env.DATABASE_URL || "",
+  pgPoolMax: Math.max(1, Math.min(30, number(process.env.PG_POOL_MAX, 10))),
   geminiApiKey: process.env.GEMINI_API_KEY || "",
   geminiModel: process.env.GEMINI_MODEL || "gemini-2.5-flash",
   whatsappVerifyToken: process.env.WHATSAPP_VERIFY_TOKEN || "",
