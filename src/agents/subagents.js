@@ -1,4 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
+import { createBlackOpsPublicApi } from "../integrations/blackops-api.js";
 
 const KNOWLEDGE = `Black Ops Paintball es un campo de paintball táctico en Támesis, Antioquia, Colombia.
 Paquetes por jugador: Estándar 1 hora/100 bolas $35.000; Táctico 1,5 horas/150 bolas $50.000; Élite 2 horas/200 bolas $60.000.
@@ -13,13 +14,25 @@ En lesiones, emergencias o quejas graves, derivar inmediatamente al equipo.`;
 
 export function createSubagents(config) {
   const ai = config.geminiApiKey ? new GoogleGenAI({ apiKey: config.geminiApiKey }) : null;
+  const businessApi = createBlackOpsPublicApi(config);
+
   async function answerCustomer(message) {
-    if (!ai) return { text: "¡Hola! Gracias por escribir a Black Ops Paintball. En este momento no puedo consultar el asistente automático. Para atención directa, escríbenos al 311 334 8774.", needsOwner: false };
+    if (!ai) return { text: "¡Hola! Gracias por escribir a Black Ops Paintball. En este momento no puedo consultar el asistente automático. Para atención directa, escríbenos al 311 334 8774.", needsOwner: false, urgent: false };
+    let liveBusinessContext = "";
+    if (businessApi.isEnabled() && /precio|paquete|horario|partida abierta|disponibilidad/i.test(message)) {
+      try {
+        const data = await businessApi.getPublicConfig();
+        liveBusinessContext = `\\nDatos dinámicos consultados en la API pública (úsalos solo si están presentes): ${JSON.stringify(data)}`;
+      } catch (error) {
+        console.error("No fue posible consultar la API pública de Black Ops:", error.message);
+        liveBusinessContext = "\\nLa consulta dinámica falló; no afirmes que los datos fueron verificados en vivo.";
+      }
+    }
     const response = await ai.models.generateContent({
       model: config.geminiModel,
       contents: message,
       config: {
-        systemInstruction: `Eres el subagente de Atención WhatsApp. Responde en español colombiano, amable, breve y de tú. Usa exclusivamente los datos de esta base aprobada. Si falta un dato, no lo inventes: indica que requiere confirmación del equipo y marca needsOwner=true. No afirmes que una reserva está creada ni que un pago está confirmado. Si hay lesión, emergencia o queja grave, indica atención humana inmediata y marca urgent=true. Devuelve solo JSON válido con las propiedades text (string), needsOwner (boolean), urgent (boolean). Base: ${KNOWLEDGE}`,
+        systemInstruction: `Eres el subagente de Atención WhatsApp del Secretario de Black Ops. Responde en español colombiano, amable, breve y de tú. Usa exclusivamente la base aprobada y el contexto dinámico adjunto. Si falta un dato, no lo inventes: indica que requiere confirmación del equipo y marca needsOwner=true. No afirmes que una reserva está creada ni que un pago está confirmado. Si hay lesión, emergencia o queja grave, indica atención humana inmediata y marca urgent=true. Devuelve solo JSON válido con text (string), needsOwner (boolean), urgent (boolean). Base: ${KNOWLEDGE}${liveBusinessContext}`,
         responseMimeType: "application/json"
       }
     });
@@ -34,12 +47,17 @@ export function createSubagents(config) {
       return { text: "No pude confirmar esa información. Puedes comunicarte directamente al 311 334 8774.", needsOwner: true, urgent: false };
     }
   }
+
   return {
     atendimentoWhatsApp: { answer: answerCustomer },
-    supervisorWebAgenda: { description: "Subagente pendiente de conectar con fuentes autorizadas de la web y agenda." },
-    investigadorWeb: { description: "Subagente pendiente de integrar búsqueda web y fuentes verificables." },
-    analistaAdministrativo: { description: "Subagente pendiente de API autenticada para ventas, pagos, reservas e inventario." },
-    revisor: { description: "Revisión inicial basada en políticas y fuentes; se ampliará con validadores específicos." },
-    auditorGeneral: { description: "Auditoría básica de eventos; se ampliará con métricas y reportes." }
+    supervisorWebAgenda: {
+      isConfigured: businessApi.isEnabled,
+      getPublicConfig: businessApi.getPublicConfig,
+      getAvailability: businessApi.getAvailability
+    },
+    investigadorWeb: { description: "Pendiente de integrar búsqueda web y fuentes verificables." },
+    analistaAdministrativo: { description: "Pendiente de API autenticada para ventas, pagos, reservas privadas e inventario." },
+    revisor: { description: "Validación inicial de formato y políticas; requiere ampliar verificadores por tipo de dato." },
+    auditorGeneral: { description: "Auditoría de eventos y errores; requiere ampliar métricas y reportes." }
   };
 }
