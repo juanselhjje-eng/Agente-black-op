@@ -50,11 +50,11 @@ export function transitionReservationRequest(request, nextStatus, details = {}) 
   return { ...request, ...details, status: nextStatus, updatedAt: new Date().toISOString() };
 }
 export function parseCustomerReservationCancellation(value) {
-  const match = String(value || "").trim().match(/^CANCELAR SOLICITUD\\s+([0-9a-f-]{8,36})$/i);
+  const match = String(value || "").trim().match(/^CANCELAR SOLICITUD\s+([0-9a-f-]{8,36})$/i);
   return match ? match[1].toLowerCase() : null;
 }
 export function parseOwnerReservationRejection(value) {
-  const match = String(value || "").trim().match(/^RECHAZAR SOLICITUD\\s+([0-9a-f-]{8,36})(?:\\s*:\\s*(.{1,300}))?$/i);
+  const match = String(value || "").trim().match(/^RECHAZAR SOLICITUD\s+([0-9a-f-]{8,36})(?:\s*:\s*(.{1,300}))?$/i);
   return match ? { idPrefix: match[1].toLowerCase(), reason: (match[2] || "El equipo no pudo aceptar esta solicitud.").trim() } : null;
 }
 export function reservationRequestStatusMessage(request) {
