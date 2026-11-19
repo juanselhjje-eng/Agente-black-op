@@ -18,7 +18,7 @@ app.get("/health", (_req, res) => {
     service: "agente-black-ops",
     role: "secretario-principal",
     subagents: ["atencion-whatsapp", "supervisor-web-agenda", "investigador-web", "analista-administrativo", "revisor", "auditor-general"],
-    integrations: { gemini: Boolean(config.geminiApiKey), whatsapp: whatsapp.isConfigured() },
+    integrations: { gemini: Boolean(config.geminiApiKey), whatsapp: whatsapp.isConfigured(), blackopsPublicApi: config.blackopsApiEnabled && Boolean(config.blackopsApiBaseUrl) },
     timestamp: new Date().toISOString()
   });
 });
