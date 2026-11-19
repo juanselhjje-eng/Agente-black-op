@@ -1,6 +1,7 @@
 import { createSubagents } from "./subagents.js";
 import { createOrchestrator } from "./orchestrator.js";
 import { buildOwnerReport } from "../reports/owner-report.js";
+import { parseCustomerReservationRequest, reservationRequestCustomerMessage, reservationRequestOwnerMessage } from "./reservation-workflow.js";
 function extractMessages(payload) {
   const messages = [];
   for (const entry of payload?.entry || []) for (const change of entry?.changes || []) for (const message of change?.value?.messages || []) {
@@ -40,6 +41,18 @@ export function createSecretary({ config, store, whatsapp }) {
       await store.audit({ type: "incoming_message", messageId: message.id, from: message.from });
       if (config.ownerWhatsAppNumber && normalizeNumber(message.from) === normalizeNumber(config.ownerWhatsAppNumber)) {
         await handleOwnerMessage(message); continue;
+      }
+      const reservationRequest = parseCustomerReservationRequest(message.text);
+      if (reservationRequest) {
+        const item = await store.createReservationRequest({ customer: message.from, ...reservationRequest, sourceMessage: message.id, confirmation: "request_only" });
+        await store.audit({ type: "customer_reservation_request_created", requestId: item.id, date: item.date, packageType: item.packageType, players: item.players });
+        await whatsapp.sendText(message.from, reservationRequestCustomerMessage(item));
+        if (config.ownerAlertsEnabled && config.ownerWhatsAppNumber) await whatsapp.sendText(config.ownerWhatsAppNumber, reservationRequestOwnerMessage(item));
+        continue;
+      }
+      if (/\b(solicitar reserva|confirmar reserva)\b/i.test(message.text)) {
+        await whatsapp.sendText(message.from, "Para registrar tu solicitud escribe: SOLICITAR RESERVA AAAA-MM-DD HH:MM JUGADORES PAQUETE. Ejemplo: SOLICITAR RESERVA 2026-11-20 10:30 4 tactical. La solicitud no confirma ni bloquea el horario.");
+        continue;
       }
       const availabilityRequest = parseCustomerAvailabilityRequest(message.text);
       const availabilityIntent = /\b(disponibilidad|horarios|reservar|reserva)\b/i.test(message.text);
@@ -136,6 +149,21 @@ export function createSecretary({ config, store, whatsapp }) {
         await whatsapp.sendText(message.from, "No pude consultar la disponibilidad pública: " + String(error?.message || "error").slice(0, 240));
         await store.audit({ type: "owner_availability_query_failed", date, reason: String(error?.message || "unknown").slice(0, 240) });
       }
+      return;
+    }
+    if (/^RESERVAS PENDIENTES$/i.test(text)) {
+      const items = await store.listReservationRequests();
+      const lines = items.slice(0,15).map(item => item.id.slice(0,8) + " — " + item.date + " " + item.time + " — " + item.players + " jugadores — " + item.packageType + " — " + item.status);
+      await whatsapp.sendText(message.from, lines.length ? "SOLICITUDES (no son reservas confirmadas):\n" + lines.join("\n") + "\nUsa CONTACTADO RESERVA ID para marcar el contacto." : "No hay solicitudes de reserva pendientes.");
+      return;
+    }
+    const contacted = text.match(/^CONTACTADO RESERVA\s+([0-9a-f-]{8,36})$/i);
+    if (contacted) {
+      const items = await store.listReservationRequests({ activeOnly: false });
+      const item = items.find(entry => entry.id.startsWith(contacted[1]));
+      const updated = item ? await store.updateReservationRequest(item.id, "owner_contacted") : null;
+      await whatsapp.sendText(message.from, updated ? "Solicitud marcada como contactada. Esto no confirma ni registra una reserva en el calendario oficial." : "No encontré una solicitud activa con ese código.");
+      if (updated) await store.audit({ type: "reservation_request_owner_contacted", requestId: updated.id });
       return;
     }
     if (/^AUDITORIA(?: HOY)?$/i.test(text)) {
