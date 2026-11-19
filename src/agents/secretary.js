@@ -16,6 +16,17 @@ export function parseAvailabilityCommand(text) {
   if (!Number.isInteger(players) || players < 2 || players > 10) return null;
   return { date: match[1], packageType: (match[2] || "standard").toLowerCase(), players };
 }
+export function parseCustomerAvailabilityRequest(value) {
+  const input = String(value || "").trim();
+  const match = input.match(/(?:disponibilidad|horarios|reservar|reserva)\\s+(?:para\\s+(?:el\\s+)?)?(\\d{4}-\\d{2}-\\d{2})(?:\\s+(?:para\\s+)?(\\d{1,2})(?:\\s*(?:personas|jugadores))?)?(?:\\s+(standard|tactical|elite))?/i);
+  if (!match) return null;
+  const date = match[1];
+  const time = Date.parse(date + "T00:00:00.000Z");
+  if (!Number.isFinite(time) || new Date(time).toISOString().slice(0,10) !== date) return null;
+  const players = Number(match[2] || 2);
+  if (!Number.isInteger(players) || players < 2 || players > 10) return null;
+  return { date, players, packageType: (match[3] || "standard").toLowerCase() };
+}
 export function parseOwnerReply(text) {
   const match = String(text || "").trim().match(/^RESPONDER\s+([0-9a-f-]{36})\s*[:|-]\s*([\s\S]+)$/i);
   return match ? { escalationId: match[1], answer: match[2].trim() } : null;
@@ -29,6 +40,31 @@ export function createSecretary({ config, store, whatsapp }) {
       await store.audit({ type: "incoming_message", messageId: message.id, from: message.from });
       if (config.ownerWhatsAppNumber && normalizeNumber(message.from) === normalizeNumber(config.ownerWhatsAppNumber)) {
         await handleOwnerMessage(message); continue;
+      }
+      const availabilityRequest = parseCustomerAvailabilityRequest(message.text);
+      if (availabilityRequest) {
+        try {
+          const plan = await subagents.supervisorWebAgenda.planAvailability({
+            from: availabilityRequest.date,
+            packageType: availabilityRequest.packageType,
+            players: availabilityRequest.players
+          });
+          if (plan.status !== "verified_against_public_blocks") {
+            await whatsapp.sendText(message.from, "¡Con gusto te ayudamos! En este momento no puedo verificar horarios automáticamente. Escríbenos al 311 334 8774 para confirmar disponibilidad con el equipo.");
+            await store.audit({ type:"customer_availability_unverified", date:availabilityRequest.date, status:plan.status });
+          } else {
+            const slots = plan.slots.slice(0,8).map(slot => "• " + slot.time + " a " + slot.endsAt);
+            const reply = slots.length
+              ? "Para el " + availabilityRequest.date + ", paquete " + availabilityRequest.packageType + " y " + availabilityRequest.players + " jugadores, estos son horarios candidatos:\\n" + slots.join("\\n") + "\\n\\nSon opciones orientativas, no reservas confirmadas. El cupo puede cambiar; para formalizarlo, escríbenos al 311 334 8774."
+              : "No encontré horarios candidatos para esa fecha con los bloqueos públicos consultados. El equipo puede revisar alternativas en el 311 334 8774.";
+            await whatsapp.sendText(message.from, reply);
+            await store.audit({ type:"customer_availability_candidates_sent", date:availabilityRequest.date, packageType:availabilityRequest.packageType, players:availabilityRequest.players, candidateCount:plan.slots.length });
+          }
+        } catch (error) {
+          await whatsapp.sendText(message.from, "No pude verificar los horarios en este momento. Para confirmarlos, escríbenos al 311 334 8774.");
+          await store.audit({ type:"customer_availability_query_failed", date:availabilityRequest.date, reason:String(error?.message || "unknown").slice(0,200) });
+        }
+        continue;
       }
       let result;
       try { result = await orchestrator.handleCustomerMessage(message.text, await store.listOwnerMemories()); }
