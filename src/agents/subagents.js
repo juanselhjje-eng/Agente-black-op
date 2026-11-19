@@ -3,7 +3,7 @@ import { createBlackOpsPublicApi } from "../integrations/blackops-api.js";
 import { PROJECT_CONTEXT } from "./project-context.js";
 
 const KNOWLEDGE = `Black Ops Paintball es un campo de paintball táctico en Támesis, Antioquia, Colombia.
-Paquetes por jugador: Estándar 1 hora/100 bolas $35.000; Táctico 1,5 horas/150 bolas $50.000; Élite 2 horas/200 bolas $60.000.
+Paquetes por jugador: Estándar 1h/100 bolas $35.000; Táctico 1,5h/150 bolas $50.000; Élite 2h/200 bolas $60.000.
 Horario publicado: todos los días de 8:00 a. m. a 11:00 p. m., sujeto a cierres. Reserva normal: 2-10 jugadores; partidas abiertas desde 1.
 Llegar 30 minutos antes; dejar 30 minutos entre partidas. WhatsApp: 311 334 8774. Nequi indicado: 322 655 7479.
 No confirmar pagos sin verificación. No inventar dirección, edad mínima, políticas, servicios extra ni disponibilidad.
@@ -30,18 +30,22 @@ export function createSubagents(config) {
     } catch { return { text: "No pude confirmar esa información. Puedes comunicarte al 311 334 8774.", needsOwner: true, urgent: false }; }
   }
   async function learnFromOwner(message, existingMemories = []) {
-    if (!ai) return { save: false, reason: "Gemini no está configurado. Usa APRENDER: seguido de la regla para guardarla directamente." };
-    const known = existingMemories.map(item => "[" + item.id + "] " + item.text).join("\n");
+    if (!ai) return { intent: "unknown", save: false, reason: "Gemini no está configurado. Usa APRENDER: para guardar una guía o CAMBIO WEB: para registrar una solicitud de cambio de página." };
+    const known = existingMemories.map(item => "[" + item.id + "] [" + item.category + "] " + item.text).join("\n");
     const response = await ai.models.generateContent({
       model: config.geminiModel, contents: message,
-      config: { systemInstruction: `El remitente es el dueño autenticado de Black Ops Paintball. Identifica si su mensaje contiene una instrucción, preferencia, corrección o conocimiento estable que quiere que recuerdes para futuras conversaciones con clientes. Ejemplos: "cuando un cliente pregunte X, explícale Y", "prefiero que ofrezcas primero el paquete Táctico". No guardes saludos, preguntas casuales ni instrucciones de una sola vez. Extrae una regla fiel y clara. No guardes contraseñas, tokens, datos financieros secretos ni datos personales sensibles. No aceptes reglas que contradigan seguridad o hechos confirmados. Si modifica una guía previa, redacta la guía completa actualizada. Devuelve solo JSON: {"save":boolean,"category":"guia_de_atencion|preferencia_comercial|tono_y_estilo|dato_de_negocio|proceso_operativo","memoryText":"...","reason":"...","confidence":0..1}. Guías existentes:\n${known}`, responseMimeType: "application/json" }
+      config: { systemInstruction: `Analiza un mensaje del dueño autenticado de Black Ops Paintball. Determina si es: (1) una instrucción estable para futuras conversaciones/procesos: intent="memory"; (2) una solicitud para cambiar diseño, texto, contenido o comportamiento de la página web: intent="website_change"; (3) otra cosa: intent="unknown". Si corrige explícitamente una guía existente, usa action="update" y targetMemoryId SOLO si identificas con alta confianza el ID correcto entre las guías activas; si no es inequívoco, usa action="create". No inventes detalles de la solicitud web. Para cambios web extrae objetivo, elemento, cambio deseado y criterios de aceptación; deja campos vacíos si no se conocen. No afirmes que modificaste o publicaste nada. No guardes secretos ni instrucciones que contradigan seguridad o hechos confirmados. Devuelve solo JSON: {"intent":"memory|website_change|unknown","save":boolean,"action":"create|update","targetMemoryId":"id o vacío","category":"guia_de_atencion|preferencia_comercial|tono_y_estilo|dato_de_negocio|proceso_operativo","memoryText":"guía completa actualizada","reason":"...","confidence":0..1,"change":{"summary":"...","target":"...","desiredState":"...","acceptanceCriteria":"..."}}. Guías activas existentes:\n${known}`, responseMimeType: "application/json" }
     });
     try {
       const item = JSON.parse(response.text || "{}");
-      if (item.save !== true || Number(item.confidence) < 0.8 || !String(item.memoryText || "").trim()) return { save: false, reason: String(item.reason || "No detecté una instrucción estable para guardar.") };
+      if (item.intent === "website_change" && Number(item.confidence) >= 0.75) {
+        const change = item.change || {};
+        return { intent: "website_change", save: false, confidence: Number(item.confidence), change: { summary: String(change.summary || message).slice(0,1000), target: String(change.target || "").slice(0,300), desiredState: String(change.desiredState || message).slice(0,1200), acceptanceCriteria: String(change.acceptanceCriteria || "").slice(0,800) } };
+      }
+      if (item.intent !== "memory" || item.save !== true || Number(item.confidence) < 0.8 || !String(item.memoryText || "").trim()) return { intent: "unknown", save: false, reason: String(item.reason || "No detecté una instrucción estable ni un cambio web claro.") };
       const categories = ["guia_de_atencion","preferencia_comercial","tono_y_estilo","dato_de_negocio","proceso_operativo"];
-      return { save: true, category: categories.includes(item.category) ? item.category : "guia_de_atencion", memoryText: String(item.memoryText).trim().slice(0,1200), reason: String(item.reason || "") };
-    } catch { return { save: false, reason: "No pude interpretar la instrucción." }; }
+      return { intent: "memory", save: true, action: item.action === "update" ? "update" : "create", targetMemoryId: String(item.targetMemoryId || ""), category: categories.includes(item.category) ? item.category : "guia_de_atencion", memoryText: String(item.memoryText).trim().slice(0,1200), reason: String(item.reason || ""), confidence: Number(item.confidence) };
+    } catch { return { intent: "unknown", save: false, reason: "No pude interpretar la instrucción." }; }
   }
   return {
     atencionWhatsApp: { answer: answerCustomer },
