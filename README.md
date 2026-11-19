@@ -4,6 +4,7 @@ Proyecto para construir un **Secretario virtual de Black Ops Paintball**: atiend
 
 ## Documentación
 - [Definición del producto y requisitos](docs/DEFINICION_PRODUCTO_Y_REQUISITOS.md)
+- [Estado real y matriz de avance](docs/ESTADO_REAL_DEL_PROYECTO.md)
 - [Operación y despliegue 24/7](docs/OPERACION_Y_DESPLIEGUE.md)
 - [Integraciones](docs/INTEGRACIONES.md)
 - [Memoria y aprendizaje del dueño](docs/MEMORIA_DEL_DUENO.md)
@@ -16,7 +17,7 @@ Incluye backend, webhook WhatsApp, Gemini, consulta de API pública, escalamient
 **Aún no está conectado a servicios reales ni desplegado.** WhatsApp requiere credenciales Meta; Gemini requiere API key; el monitor requiere URL. La página no se modifica todavía: falta conectar el repositorio/CMS real y staging. Los reportes de ventas, pagos, inventario y reservas privadas requieren API autenticada del negocio.
 
 ## Reportes operativos
-El dueño puede enviar por WhatsApp `RESUMEN HOY` o `RESUMEN SEMANA` para recibir métricas registradas de mensajes, escalaciones, disponibilidad HTTP y solicitudes de cambios web. El reporte no estima ventas, pagos, inventario ni reservas privadas: esos datos requieren una API autenticada del negocio. La zona horaria predeterminada es `America/Bogota` (`REPORT_TIMEZONE`).
+El dueño puede enviar por WhatsApp `RESUMEN HOY` o `RESUMEN SEMANA` para recibir métricas registradas de mensajes, escalaciones, disponibilidad HTTP y solicitudes de cambios web. También puede activar reportes automáticos diarios y semanales mediante `OWNER_REPORTS_ENABLED=true`; por defecto están apagados y los horarios se configuran con `OWNER_DAILY_REPORT_TIME` y `OWNER_WEEKLY_REPORT_TIME`. El reporte no estima ventas, pagos, inventario ni reservas privadas: esos datos requieren una API autenticada del negocio. La zona horaria predeterminada es `America/Bogota` (`REPORT_TIMEZONE`).
 
 ## Almacenamiento y despliegue
 - Desarrollo local: JSON con `DATA_DIR`.
