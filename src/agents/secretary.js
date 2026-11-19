@@ -1,7 +1,7 @@
 import { createSubagents } from "./subagents.js";
 import { createOrchestrator } from "./orchestrator.js";
 import { buildOwnerReport } from "../reports/owner-report.js";
-import { parseCustomerPaymentReport, customerPaymentReportMessage, ownerPaymentReportMessage } from "./reservation-policy.js";
+import { parseCustomerPaymentReport, customerPaymentReportMessage, ownerPaymentReportMessage, isCustomerPaymentInfoRequest, customerPaymentInstructionsMessage } from "./reservation-policy.js";
 import { parseCustomerReservationRequest, parseCustomerReservationCancellation, parseOwnerReservationRejection, parseOwnerReservationClosure, reservationRequestCustomerMessage, reservationRequestOwnerMessage, reservationRequestStatusMessage } from "./reservation-workflow.js";
 function extractMessages(payload) {
   const messages = [];
@@ -60,7 +60,7 @@ export function createSecretary({ config, store, whatsapp }) {
         });
         continue;
       }
-      const cancellationId = parseCustomerReservationCancellation(message.text);
+      if (isCustomerPaymentInfoRequest(message.text)) {\n        await whatsapp.sendText(message.from, customerPaymentInstructionsMessage());\n        await store.audit({ type: "customer_payment_instructions_sent" });\n        continue;\n      }\n      const cancellationId = parseCustomerReservationCancellation(message.text);
       if (cancellationId) {
         const requests = await store.listReservationRequests({ activeOnly: false });
         const matches = requests.filter(item => item.id.startsWith(cancellationId));
