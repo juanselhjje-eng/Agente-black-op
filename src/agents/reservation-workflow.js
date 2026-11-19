@@ -63,3 +63,9 @@ export function reservationRequestStatusMessage(request) {
   if (request.status === "closed") return "La solicitud " + request.id.slice(0,8) + " fue cerrada por el equipo. Para más información, comunícate al 311 334 8774.";
   return "La solicitud " + request.id.slice(0,8) + " fue actualizada. Comunícate al equipo al 311 334 8774.";
 }
+
+
+export function parseOwnerReservationClosure(value) {
+  const match = String(value || "").trim().match(/^CERRAR SOLICITUD\\s+([0-9a-f-]{8,36})(?:\\s*:\\s*(.{1,300}))?$/i);
+  return match ? { idPrefix: match[1].toLowerCase(), note: (match[2] || "Cerrada por el equipo.").trim() } : null;
+}
