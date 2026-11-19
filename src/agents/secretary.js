@@ -55,7 +55,7 @@ export function createSecretary({ config, store, whatsapp }) {
           } else {
             const slots = plan.slots.slice(0,8).map(slot => "• " + slot.time + " a " + slot.endsAt);
             const reply = slots.length
-              ? "Para el " + availabilityRequest.date + ", paquete " + availabilityRequest.packageType + " y " + availabilityRequest.players + " jugadores, estos son horarios candidatos:\\n" + slots.join("\\n") + "\\n\\nSon opciones orientativas, no reservas confirmadas. El cupo puede cambiar; para formalizarlo, escríbenos al 311 334 8774."
+              ? "Para el " + availabilityRequest.date + ", paquete " + availabilityRequest.packageType + " y " + availabilityRequest.players + " jugadores, estos son horarios candidatos:\n" + slots.join("\n") + "\n\nSon opciones orientativas, no reservas confirmadas. El cupo puede cambiar; para formalizarlo, escríbenos al 311 334 8774."
               : "No encontré horarios candidatos para esa fecha con los bloqueos públicos consultados. El equipo puede revisar alternativas en el 311 334 8774.";
             await whatsapp.sendText(message.from, reply);
             await store.audit({ type:"customer_availability_candidates_sent", date:availabilityRequest.date, packageType:availabilityRequest.packageType, players:availabilityRequest.players, candidateCount:plan.slots.length });
