@@ -34,10 +34,34 @@ export function createSecretary({ config, store, whatsapp }) {
   }
   async function handleOwnerMessage(message) {
     const text = message.text.trim();
+    const reply = parseOwnerReply(text);
+    if (reply) {
+      const closed = await store.closeEscalation(reply.escalationId, "answered", { ownerAnswer: reply.answer });
+      if (!closed) { await whatsapp.sendText(message.from, "No encontré una consulta pendiente con ese ID. Puede haber vencido o ya fue respondida."); return; }
+      await whatsapp.sendText(closed.customer, reply.answer);
+      await whatsapp.sendText(message.from, "Respuesta enviada al cliente.");
+      await store.audit({ type: "owner_escalation_answered", escalationId: reply.escalationId });
+      return;
+    }
     if (/^MEMORIAS$/i.test(text)) {
       const memories = await store.listOwnerMemories();
       const lines = memories.slice(-15).map(item => item.id.slice(0,8) + " — " + item.text);
       await whatsapp.sendText(message.from, lines.length ? "Guías que tengo guardadas:\n" + lines.join("\n") + "\nPara desactivar una: OLVIDAR MEMORIA ID_CORTO." : "Aún no tengo guías guardadas.");
+      return;
+    }
+    if (/^CAMBIOS WEB$/i.test(text)) {
+      const requests = await store.listWebChangeRequests();
+      const lines = requests.slice(-10).map(item => item.id.slice(0,8) + " [" + item.status + "] " + item.summary);
+      await whatsapp.sendText(message.from, lines.length ? "Solicitudes de la página:\n" + lines.join("\n") + "\nPara aprobar una solicitud: APROBAR CAMBIO ID_CORTO." : "No hay solicitudes de cambio web pendientes.");
+      return;
+    }
+    const approve = text.match(/^APROBAR CAMBIO\s+([0-9a-f-]{8,36})$/i);
+    if (approve) {
+      const requests = await store.listWebChangeRequests();
+      const item = requests.find(entry => entry.id.startsWith(approve[1]));
+      const approved = item ? await store.approveWebChangeRequest(item.id, message.from) : null;
+      await whatsapp.sendText(message.from, approved ? "Aprobé la solicitud " + approved.id.slice(0,8) + ". Queda autorizada para que el conector de la página la implemente; todavía no está publicada porque esa integración aún debe configurarse y probarse." : "No encontré una solicitud pendiente con ese ID.");
+      await store.audit({ type: "web_change_approved", changeId: item?.id || "", success: Boolean(approved) });
       return;
     }
     const forget = text.match(/^OLVIDAR MEMORIA\s+([0-9a-f-]{8,36})$/i);
@@ -56,14 +80,33 @@ export function createSecretary({ config, store, whatsapp }) {
       await whatsapp.sendText(message.from, saved.duplicate ? "Ya tenía guardada esa guía y la seguiré aplicando." : "Entendido. Guardé esta guía para futuras conversaciones: “" + saved.text + "”. Puedes consultarla con MEMORIAS.");
       return;
     }
-    const learned = await subagents.aprendizaje.learnFromOwner(text, await store.listOwnerMemories());
-    if (learned.save) {
-      const saved = await store.saveOwnerMemory({ text: learned.memoryText, category: learned.category, sourceMessage: message.id });
-      await store.audit({ type: "owner_memory_saved", memoryId: saved.id, category: saved.category, source: "natural_language" });
-      await whatsapp.sendText(message.from, saved.duplicate ? "Esa guía ya estaba guardada y la seguiré aplicando." : "Entendido. Aprendí y guardé esta indicación para futuras conversaciones con clientes:\n“" + saved.text + "”\nPuedes revisar mis guías con MEMORIAS.");
+    if (/^CAMBIO WEB\s*:/i.test(text)) {
+      const instruction = text.replace(/^CAMBIO WEB\s*:/i, "").trim();
+      if (!instruction) { await whatsapp.sendText(message.from, "Después de CAMBIO WEB: describe qué elemento de la página quieres cambiar y cómo debería quedar."); return; }
+      const item = await store.createWebChangeRequest({ summary: instruction.slice(0,1000), target: "", desiredState: instruction.slice(0,1200), acceptanceCriteria: "", sourceMessage: message.id });
+      await store.audit({ type: "web_change_requested", changeId: item.id });
+      await whatsapp.sendText(message.from, "Registré tu solicitud de cambio web " + item.id.slice(0,8) + ": “" + item.summary + "”. Queda pendiente de revisión. Cuando quieras autorizarla, escribe APROBAR CAMBIO " + item.id.slice(0,8) + ". Aún no se modifica la página: falta conectar su repositorio/constructor y el entorno de pruebas.");
       return;
     }
-    await whatsapp.sendText(message.from, learned.reason || "Te escucho. Si quieres enseñarme una regla, explícame qué debo recordar o usa APRENDER: seguido de la instrucción.");
+    const learned = await subagents.aprendizaje.learnFromOwner(text, await store.listOwnerMemories());
+    if (learned.intent === "website_change") {
+      const item = await store.createWebChangeRequest({ ...learned.change, sourceMessage: message.id });
+      await store.audit({ type: "web_change_requested", changeId: item.id, source: "natural_language" });
+      await whatsapp.sendText(message.from, "Entendí que quieres este cambio en la página: “" + item.summary + "”. Lo registré como solicitud " + item.id.slice(0,8) + " para revisar. No he tocado la web ni publicado nada. Cuando esté conectado el repositorio y las pruebas, podrás aprobar su implementación con APROBAR CAMBIO " + item.id.slice(0,8) + ".");
+      return;
+    }
+    if (learned.save) {
+      let saved;
+      if (learned.action === "update" && learned.targetMemoryId) {
+        const active = await store.listOwnerMemories();
+        if (active.some(item => item.id === learned.targetMemoryId)) saved = await store.updateOwnerMemory(learned.targetMemoryId, { text: learned.memoryText, category: learned.category, sourceMessage: message.id });
+      }
+      if (!saved) saved = await store.saveOwnerMemory({ text: learned.memoryText, category: learned.category, sourceMessage: message.id });
+      await store.audit({ type: saved.revisions?.length ? "owner_memory_updated" : "owner_memory_saved", memoryId: saved.id, category: saved.category, source: "natural_language" });
+      await whatsapp.sendText(message.from, saved.duplicate ? "Esa guía ya estaba guardada y la seguiré aplicando." : (saved.revisions?.length ? "Corregí la guía anterior y conservé su versión previa en el historial. La nueva regla es:\n“" : "Entendido. Aprendí y guardé esta indicación para futuras conversaciones con clientes:\n“") + saved.text + "”\nPuedes revisar mis guías con MEMORIAS.");
+      return;
+    }
+    await whatsapp.sendText(message.from, learned.reason || "Te escucho. Puedes enseñarme una regla o pedirme un cambio en la página describiéndolo normalmente.");
   }
   async function notifyOwner(message, prefix) {
     if (config.ownerAlertsEnabled && config.ownerWhatsAppNumber) await whatsapp.sendText(config.ownerWhatsAppNumber, prefix + "\nCliente: " + message.from + "\nMensaje: " + message.text);
