@@ -128,3 +128,35 @@ export function evaluateRefundRequest({ paymentType = "unknown", paymentStatus =
 }
 
 export const reservationPolicyStatuses = Object.freeze([...RESERVATION_STATUSES]);
+
+
+/**
+ * Reconoce únicamente afirmaciones explícitas de pago ya realizado.
+ * No interpreta preguntas sobre cómo pagar como comprobantes.
+ */
+export function parseCustomerPaymentReport(value) {
+  const text = String(value || "").trim();
+  if (!text || text.length > 2000) return null;
+  const normalized = text.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase();
+  const evidencePattern = /\\b(?:ya pague|pago realizado|realice (?:la )?transferencia|hice (?:la )?transferencia|envie (?:el )?comprobante|adjunto (?:el )?comprobante|transferencia realizada|consignacion realizada)\\b/;
+  if (!evidencePattern.test(normalized)) return null;
+  const amountMatch = normalized.match(/\\b(?:cop\\s*)?\\$?\\s*(\\d{1,3}(?:[.,]\\d{3})+|\\d{4,9})(?:\\s*(?:cop|pesos))?\\b/);
+  let reportedAmountCop = null;
+  if (amountMatch) {
+    const digits = amountMatch[1].replace(/[.,]/g, "");
+    const amount = Number(digits);
+    if (Number.isSafeInteger(amount) && amount >= 0) reportedAmountCop = amount;
+  }
+  return { reportedAmountCop, evidenceType: /comprobante/.test(normalized) ? "receipt_mentioned" : "payment_claim" };
+}
+
+export function customerPaymentReportMessage() {
+  return "Recibimos tu aviso de pago. Importante: esto todavía NO significa que el pago esté confirmado. El equipo debe verificarlo en el sistema antes de marcar la reserva como pagada. Si aún no has enviado el soporte por el canal indicado por el equipo, comunícate al 311 334 8774.";
+}
+
+export function ownerPaymentReportMessage({ customer, reportedAmountCop } = {}) {
+  const amount = Number.isSafeInteger(reportedAmountCop) && reportedAmountCop >= 0
+    ? "Monto indicado por el cliente: $" + reportedAmountCop.toLocaleString("es-CO") + " COP. "
+    : "";
+  return "REPORTE DE PAGO PENDIENTE DE VERIFICACIÓN. Cliente: " + String(customer || "no disponible") + ". " + amount + "El cliente afirma haber realizado el pago. Verifica en la fuente administrativa; no marcar como pagado solo por este mensaje.";
+}
