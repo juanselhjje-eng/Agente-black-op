@@ -1,5 +1,5 @@
 const URGENT = /\b(lesi[oó]n|lesion|herid[ao]|sangr|fractur|accidente|emergencia|urgente|amenaz|intoxic|desmayo|queja grave)\b/i;
-const PAYMENT_OR_BOOKING = /\b(pag[oa] (?:confirmad[oa]|verificad[oa])|reserva (?:confirmada|agendada)|cupo (?:confirmado|garantizado)|transacci[oó]n aprobada)\b/i;
+const PAYMENT_OR_BOOKING = /(?:pag[oa].{0,30}(?:confirmad[oa]|verificad[oa]|aprobado)|reserva.{0,30}(?:confirmada|agendada)|cupo.{0,20}(?:confirmado|garantizado)|transacci[oó]n aprobada)/i;
 const CONTACT = "Para atención directa, escríbenos al 311 334 8774.";
 
 export function classifyCustomerMessage(message) {
