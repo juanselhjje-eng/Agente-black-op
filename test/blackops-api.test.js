@@ -23,11 +23,11 @@ test("consulta configuración con el contrato POST documentado", async () => {
   assert.deepEqual(JSON.parse(request.options.body), { method: "GET", path: "/api/public/config" });
 });
 
-test("valida formato y orden de fechas de disponibilidad", async () => {
+test("valida formato y orden de fechas de disponibilidad", () => {
   const api = createBlackOpsPublicApi({
     blackopsApiEnabled: true,
     blackopsApiBaseUrl: "https://example.test/api"
   }, async () => ({ ok: true, json: async () => ({ busy: [] }) }));
-  await assert.rejects(() => api.getAvailability("20-11-2026", "2026-11-21"), /YYYY-MM-DD/);
-  await assert.rejects(() => api.getAvailability("2026-11-22", "2026-11-21"), /YYYY-MM-DD/);
+  assert.throws(() => api.getAvailability("20-11-2026", "2026-11-21"), /YYYY-MM-DD/);
+  assert.throws(() => api.getAvailability("2026-11-22", "2026-11-21"), /YYYY-MM-DD/);
 });
