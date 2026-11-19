@@ -46,8 +46,8 @@ export function createSecretary({ config, store, whatsapp }) {
       await store.audit({ type: "owner_escalation_answered", escalationId: reply.escalationId });
       return;
     }
-    if (/^INVESTIGAR\\s*:/i.test(text)) {
-      const query = text.replace(/^INVESTIGAR\\s*:/i, "").trim();
+    if (/^INVESTIGAR\s*:/i.test(text)) {
+      const query = text.replace(/^INVESTIGAR\s*:/i, "").trim();
       if (!query) {
         await whatsapp.sendText(message.from, "Después de INVESTIGAR: escribe el tema o competidor que quieres analizar.");
         return;
