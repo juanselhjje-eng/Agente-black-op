@@ -69,6 +69,25 @@ export function createSecretary({ config, store, whatsapp }) {
       }
       return;
     }
+    const availabilityCommand = text.match(/^DISPONIBILIDAD:\\s*(\\d{4}-\\d{2}-\\d{2})(?:\\s+(standard|tactical|elite))?(?:\\s+(\\d{1,2}))?$/i);
+    if (availabilityCommand) {
+      const [, date, packageType = "standard", playersText = "2"] = availabilityCommand;
+      try {
+        const result = await subagents.supervisorWebAgenda.planAvailability({ from: date, packageType: packageType.toLowerCase(), players: Number(playersText) });
+        if (result.status !== "verified_against_public_blocks") {
+          await whatsapp.sendText(message.from, "DISPONIBILIDAD NO VERIFICADA: " + result.message);
+        } else {
+          const lines = result.slots.slice(0, 24).map(slot => "• " + slot.date + " " + slot.time + "–" + slot.endsAt);
+          const suffix = result.slots.length > 24 ? "\\n... y " + (result.slots.length - 24) + " candidatos más." : "";
+          await whatsapp.sendText(message.from, ["CANDIDATOS DE DISPONIBILIDAD (no son reservas confirmadas)", result.message, "Fecha: " + date + " | Paquete: " + packageType + " | Jugadores: " + playersText, lines.length ? lines.join("\\n") + suffix : "Sin candidatos en ese día.", "La API pública no bloquea ni confirma cupos. Verifica y formaliza en el sistema oficial antes de prometer disponibilidad."].join("\\n\\n"));
+        }
+        await store.audit({ type: "owner_availability_planned", date, packageType, players: Number(playersText), status: result.status, candidateCount: result.slots?.length || 0 });
+      } catch (error) {
+        await whatsapp.sendText(message.from, "No pude consultar la disponibilidad pública: " + String(error?.message || "error").slice(0, 240));
+        await store.audit({ type: "owner_availability_query_failed", date, reason: String(error?.message || "unknown").slice(0, 240) });
+      }
+      return;
+    }
     if (/^ESTADO WEB$/i.test(text)) {
       const latest = await store.getLatestWebsiteCheck();
       if (!latest) {
