@@ -1,7 +1,7 @@
 # Estado real del proyecto Black Ops Paintball
 
 **Corte:** 19 de noviembre de 2026  
-**Estimación global corregida:** aproximadamente **35%** de alcance funcional.  
+**Estimación global corregida:** aproximadamente **36%** de alcance funcional.  
 **Estado:** prototipo backend en desarrollo; no está listo para producción.
 
 ## Cómo se calcula el avance
@@ -21,7 +21,7 @@ La estimación es orientativa y debe revisarse al cerrar cada bloque de aceptaci
 | Memoria del dueño | Guardar, listar, corregir y desactivar; falta validación de seguridad y pruebas productivas | 70% |
 | Escalamiento al dueño | Caso, respuesta y timeout de dos minutos; falta resolver robustez multiinstancia y respuestas tardías | 60% |
 | Supervisión web | Comprobación HTTP, historial, alertas y consulta ESTADO WEB; no valida el proceso de reserva completo | 60% |
-| Reportes al dueño | Reportes manuales y programación diaria/semanal opt-in; métricas solo del propio agente | 55% |
+| Reportes al dueño | Reportes manuales y programación diaria/semanal opt-in; métricas solo del propio agente | 65% |
 | Consulta de configuración y disponibilidad | Adaptador a dos endpoints públicos documentados; contrato real aún por validar | 20% |
 | Reservas privadas y calendario operativo | Sin API autenticada ni flujo transaccional implementado | 0% |
 | Ventas, ingresos y pagos | Sin fuente administrativa ni conciliación | 0% |
