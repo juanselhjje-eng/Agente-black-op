@@ -46,6 +46,7 @@ function validDateRange(from, to) {
   if (!DAY.test(from) || !DAY.test(to) || from > to) throw new TypeError("Rango de fechas inválido; usa YYYY-MM-DD.");
   const start = Date.parse(from + "T00:00:00Z");
   const end = Date.parse(to + "T00:00:00Z");
+  if (!Number.isFinite(start) || !Number.isFinite(end) || new Date(start).toISOString().slice(0,10) !== from || new Date(end).toISOString().slice(0,10) !== to) throw new TypeError("Fecha calendario inexistente.");
   if ((end - start) / 86400000 > 30) throw new RangeError("Consulta máximo 31 días por planificación.");
   return { start, end };
 }
