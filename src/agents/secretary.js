@@ -10,7 +10,7 @@ function extractMessages(payload) {
 }
 const normalizeNumber = value => String(value || "").replace(/\D/g, "");
 export function parseAvailabilityCommand(text) {
-  const match = String(text || "").trim().match(/^DISPONIBILIDAD:\\s*(\\d{4}-\\d{2}-\\d{2})(?:\\s+(standard|tactical|elite))?(?:\\s+(\\d{1,2}))?$/i);
+  const match = String(text || "").trim().match(/^DISPONIBILIDAD:\s*(\d{4}-\d{2}-\d{2})(?:\s+(standard|tactical|elite))?(?:\s+(\d{1,2}))?$/i);
   if (!match) return null;
   const players = Number(match[3] || 2);
   if (!Number.isInteger(players) || players < 2 || players > 10) return null;
