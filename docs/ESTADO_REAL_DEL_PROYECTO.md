@@ -23,7 +23,7 @@ La estimación es orientativa y debe revisarse al cerrar cada bloque de aceptaci
 | Supervisión web | Comprobación HTTP, historial y alertas; planificador de candidatos con bloqueos públicos, márgenes y comando del dueño, pendiente validar respuesta real de la API | 65% |
 | Reportes al dueño | Reportes manuales y programación diaria/semanal opt-in; métricas solo del propio agente | 65% |
 | Consulta de configuración y disponibilidad | Cliente público con HTTPS, timeout, validación de fechas/respuestas y errores controlados; planificador de candidatos y pruebas; contrato real aún por validar y sin escritura de reservas | 50% |
-| Reservas privadas y calendario operativo | Sin API autenticada ni flujo transaccional implementado | 0% |
+| Reservas privadas y calendario operativo | Intake persistente de solicitudes y cola del dueño en JSON/PostgreSQL; sin escritura autenticada, bloqueo ni confirmación de reservas | 10% |
 | Ventas, ingresos y pagos | Analista determinista separa recaudos verificados de reembolsos y protege sumas COP contra desbordamiento; falta proveedor autenticado y conciliación real | 35% |
 | Inventario y alertas de reposición | Cálculo de mínimos implementado sobre snapshot; falta conectar fuente real de existencias y movimientos | 25% |
 | Investigación de competencia y tendencias | Subagente Gemini con Google Search grounding, enlaces HTTPS y advertencia si faltan fuentes; falta validar cuenta/uso real y mejorar trazabilidad | 45% |
@@ -50,6 +50,7 @@ El proyecto tiene una base técnica útil, pero la mayor parte de las funciones 
 - Investigador web con Gemini Google Search grounding, extracción/deduplicación de fuentes HTTPS y comando del dueño `INVESTIGAR:`.
 - Analista administrativo determinista para snapshots normalizados: reservas por estado, pagos reportados, recaudos confirmados y reembolsos separados; protege sumas COP contra desbordamiento e inventario bajo mínimo; sin fuente privada conectada.
 - Cliente de API pública endurecido con validación de URL HTTPS, fechas reales, rango máximo, timeout, errores seguros y pruebas.\n- Planificador conservador de disponibilidad pública con paquetes, jugadores, bloqueos, márgenes de limpieza y parser validado del comando del dueño; no confirma ni bloquea reservas.\n- Atención al cliente reconoce consultas estructuradas de horarios, valida fecha y cantidad de jugadores, muestra candidatos y deriva al equipo si faltan datos o falla la API; no confirma reservas.
+- Flujo de solicitud asistida: valida fecha, hora, paquete y jugadores; persiste la solicitud en JSON/PostgreSQL, notifica al dueño y permite consultar la cola y marcar contacto; nunca bloquea ni confirma cupos.
 - Auditor general determinista, con resumen de eventos, hallazgos operativos y protección contra exposición de mensajes/teléfonos; comando `AUDITORIA`.
 - Planificador de marketing fundamentado con investigación previa, calendario de hasta siete piezas y borradores de captions/CTA/briefs visuales; comando `MARKETING:` sin publicación automática.
 - Dockerfile, Compose, CI y documentación inicial.
