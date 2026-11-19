@@ -17,3 +17,20 @@ test("rechaza fechas, horas, intervalos y cantidades inválidas", () => {
     "quiero reservar mañana"
   ]) assert.equal(parseCustomerReservationRequest(value), null);
 });
+
+import { parseCustomerReservationCancellation, parseOwnerReservationRejection, transitionReservationRequest } from "../src/agents/reservation-workflow.js";
+
+test("el cliente puede solicitar cancelar usando el código", () => {
+  assert.equal(parseCustomerReservationCancellation("CANCELAR SOLICITUD 12345678"), "12345678");
+  assert.equal(parseCustomerReservationCancellation("cancelar mi reserva"), null);
+});
+test("el dueño puede rechazar con motivo opcional", () => {
+  assert.deepEqual(parseOwnerReservationRejection("RECHAZAR SOLICITUD 12345678: No hay cupo"), { idPrefix: "12345678", reason: "No hay cupo" });
+  assert.equal(parseOwnerReservationRejection("RECHAZAR SOLICITUD"), null);
+});
+test("la máquina de estados permite solo transiciones previstas", () => {
+  const request = { id: "12345678-aaaa", status: "pending_owner_review" };
+  assert.equal(transitionReservationRequest(request, "rejected", { resolutionNote: "Sin cupo" }).status, "rejected");
+  assert.equal(transitionReservationRequest(request, "scheduled"), null);
+  assert.equal(transitionReservationRequest({ ...request, status: "rejected" }, "owner_contacted"), null);
+});
