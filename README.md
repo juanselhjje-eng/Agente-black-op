@@ -8,12 +8,14 @@ Proyecto para construir un **Secretario virtual de Black Ops Paintball**: atiend
 - [Integraciones](docs/INTEGRACIONES.md)
 - [Memoria y aprendizaje del dueño](docs/MEMORIA_DEL_DUENO.md)
 
-## Estado
-El repositorio incluye backend inicial, webhook WhatsApp, conexión Gemini, consulta de API pública, escalaciones y memoria local del dueño. La memoria admite instrucciones naturales y correcciones versionadas.
+## Estado del desarrollo
+Incluye backend inicial, webhook de WhatsApp, integración Gemini, consulta de API pública, escalamiento con espera de dos minutos, memoria correctiva del dueño, registro de solicitudes de cambio web y monitor HTTP periódico configurable para la página.
 
-También existe un registro de solicitudes de cambios web: el dueño puede describir qué quiere cambiar y el Secretario lo registra para revisión y aprobación. **Todavía no modifica la web**: falta conectar el repositorio/CMS real, permisos y staging. La aprobación registrada no publica automáticamente.
+El monitor registra disponibilidad, estado HTTP y latencia, conserva historial local y puede avisar al dueño cuando detecta caída o recuperación. Endpoint de consulta: `GET /health/website`.
 
-No está conectado a servicios reales ni desplegado. JSON es almacenamiento de desarrollo de una instancia; producción requiere base de datos, copias de seguridad y controles de acceso.
+**No está conectado a servicios reales ni desplegado.** El monitor requiere `WEBSITE_MONITOR_URL`; WhatsApp requiere credenciales Meta; Gemini requiere API key. JSON es almacenamiento de desarrollo de una instancia, no producción multiinstancia.
+
+El Secretario todavía no modifica la página: hace falta conectar el repositorio/CMS real de la web, permisos y staging. La aprobación de una solicitud no publica automáticamente.
 
 ## Reglas
 1. Todo el código y la documentación se mantienen en este repositorio GitHub.
@@ -30,6 +32,6 @@ npm install
 npm test
 npm run dev
 ```
-Consulta `http://127.0.0.1:3000/health`.
+Consulta `http://127.0.0.1:3000/health` y, cuando el monitor esté configurado, `http://127.0.0.1:3000/health/website`.
 
 Repositorio: https://github.com/juanselhjje-eng/Agente-black-op
