@@ -7,12 +7,14 @@ export function startWebsiteMonitorWorker({ monitor, store, whatsapp, config }) 
       const result = await monitor.check();
       const previous = await store.getLatestWebsiteCheck();
       await store.saveWebsiteCheck(result);
-      if (previous && previous.ok !== result.ok && config.ownerAlertsEnabled && config.ownerWhatsAppNumber) {
+      const firstFailure = !previous && !result.ok;
+      const statusChanged = previous && previous.ok !== result.ok;
+      if ((firstFailure || statusChanged) && config.ownerAlertsEnabled && config.ownerWhatsAppNumber) {
         const message = result.ok
           ? "RECUPERACIÓN: la página de Black Ops vuelve a responder. HTTP " + result.status + ", " + result.latencyMs + " ms."
           : "ALERTA: la página de Black Ops no responde correctamente. Motivo: " + result.reason + (result.status ? ", HTTP " + result.status : "") + ".";
         await whatsapp.sendText(config.ownerWhatsAppNumber, message);
-        await store.audit({ type: "website_status_changed", ok: result.ok, reason: result.reason, status: result.status || null });
+        await store.audit({ type: "website_status_changed", ok: result.ok, reason: result.reason, status: result.status || null, firstFailure });
       }
     } catch (error) {
       console.error("Error en monitor de página:", error);
