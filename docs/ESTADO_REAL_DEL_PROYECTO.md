@@ -1,7 +1,7 @@
 # Estado real del proyecto Black Ops Paintball
 
 **Corte:** 19 de noviembre de 2026  
-**Estimación global corregida:** aproximadamente **43%** de alcance funcional.  
+**Estimación global corregida:** aproximadamente **44%** de alcance funcional.  
 **Estado:** prototipo backend en desarrollo; no está listo para producción.
 
 ## Cómo se calcula el avance
@@ -27,7 +27,7 @@ La estimación es orientativa y debe revisarse al cerrar cada bloque de aceptaci
 | Ventas, ingresos y pagos | Analista determinista separa recaudos verificados de reembolsos y protege sumas COP contra desbordamiento; falta proveedor autenticado y conciliación real | 35% |
 | Inventario y alertas de reposición | Cálculo de mínimos implementado sobre snapshot; falta conectar fuente real de existencias y movimientos | 25% |
 | Investigación de competencia y tendencias | Subagente Gemini con Google Search grounding, enlaces HTTPS y advertencia si faltan fuentes; falta validar cuenta/uso real y mejorar trazabilidad | 45% |
-| Marketing e Instagram | Investigación fundamentada disponible como insumo; sin generador de campañas ni Instagram Graph API | 10% |
+| Marketing e Instagram | Planificador genera calendario de hasta 7 piezas con fuentes, CTA, métrica y controles de publicación; no publica ni conecta Instagram Graph API | 30% |
 | Revisor y auditor general | Revisor determinista más auditor de eventos con alertas por caídas, consultas fallidas, urgencias y timeouts; resumen no expone datos personales | 50% |
 | Despliegue Windows Server | Docker y guías iniciales; no hay servidor, dominio, HTTPS, instalación ni restauración probada | 15% |
 | Seguridad, operación y continuidad | HMAC opcional/obligatorio en producción, secretos por entorno, PostgreSQL y scripts; faltan pruebas de seguridad, backups reales y carga | 30% |
@@ -50,7 +50,7 @@ El proyecto tiene una base técnica útil, pero la mayor parte de las funciones 
 - Investigador web con Gemini Google Search grounding, extracción/deduplicación de fuentes HTTPS y comando del dueño `INVESTIGAR:`.
 - Analista administrativo determinista para snapshots normalizados: reservas por estado, pagos reportados, recaudos confirmados y reembolsos separados; protege sumas COP contra desbordamiento e inventario bajo mínimo; sin fuente privada conectada.
 - Planificador conservador de disponibilidad pública con paquetes, jugadores, bloqueos, márgenes de limpieza y parser validado del comando del dueño; no confirma ni bloquea reservas.
-- Auditor general determinista, con resumen de eventos, hallazgos operativos y protección contra exposición de mensajes/teléfonos; comando `AUDITORIA`.
+- Auditor general determinista, con resumen de eventos, hallazgos operativos y protección contra exposición de mensajes/teléfonos; comando `AUDITORIA`.\n- Planificador de marketing fundamentado con investigación previa, calendario de hasta siete piezas y borradores de captions/CTA/briefs visuales; comando `MARKETING:` sin publicación automática.
 - Dockerfile, Compose, CI y documentación inicial.
 - Pruebas automatizadas ejecutadas por GitHub Actions; esto no sustituye pruebas de integración contra Meta, Gemini, PostgreSQL real ni el sitio de reservas.
 
