@@ -17,7 +17,7 @@ La estimación es orientativa y debe revisarse al cerrar cada bloque de aceptaci
 | Backend Node.js y arquitectura modular | Servidor, configuración, módulos y CI; falta endurecimiento y validación productiva | 65% |
 | Atención por WhatsApp | Webhook, cliente Cloud API y lógica básica; falta conectar número/Meta y pruebas reales de extremo a extremo | 45% |
 | Gemini y atención inteligente | SDK y generación JSON; sin pruebas con credenciales reales, function calling y orquestación aún limitada | 35% |
-| Secretario y coordinación de subagentes | Orquestador central integrado a la atención; varios subagentes administrativos siguen siendo descripciones o dependen de APIs externas | 40% |
+| Secretario y coordinación de subagentes | Orquestador conectado; supervisor de agenda y auditor general ejecutan lógica determinista, pero faltan integraciones privadas | 50% |
 | Memoria del dueño | Guardar, listar, corregir y desactivar; falta validación de seguridad y pruebas productivas | 70% |
 | Escalamiento al dueño | Caso, respuesta y timeout de dos minutos; falta resolver robustez multiinstancia y respuestas tardías | 60% |
 | Supervisión web | Comprobación HTTP, historial y alertas; planificador de candidatos con bloqueos públicos, márgenes y comando del dueño, pendiente validar respuesta real de la API | 65% |
@@ -34,7 +34,7 @@ La estimación es orientativa y debe revisarse al cerrar cada bloque de aceptaci
 
 ## Por qué no corresponde reportar 80%
 
-El 80% no está respaldado por la planeación. Las capacidades centrales que convierten el prototipo en administrador del negocio siguen sin implementarse: reservas privadas, ventas, pagos, inventario, investigación, marketing/Instagram, revisión independiente y despliegue real. Además, los subagentes investigador, analista, revisor y auditor todavía son en parte estructuras descriptivas.
+El 80% no está respaldado por la planeación. Las capacidades centrales que convierten el prototipo en administrador del negocio siguen sin implementarse: reservas privadas, ventas, pagos, inventario, investigación, marketing/Instagram, revisión independiente y despliegue real. Además, investigación y analítica administrativa aún dependen de la configuración real de Gemini y de proveedores privados; el marketing y la integración de Instagram siguen pendientes.
 
 El proyecto tiene una base técnica útil, pero la mayor parte de las funciones administrativas depende de APIs privadas, permisos y datos del negocio que aún no se han entregado.
 
@@ -45,7 +45,12 @@ El proyecto tiene una base técnica útil, pero la mayor parte de las funciones 
 - Almacenamiento JSON y adaptador PostgreSQL.
 - Memoria del dueño y flujo de escalamiento.
 - Monitor HTTP con historial, alertas y consulta de estado.
-- Reportes operativos manuales y envío automático diario/semanal configurable, desactivado por defecto.\n- Orquestador central conectado al flujo de atención y revisor determinista de respuestas con pruebas automatizadas.\n- Investigador web con Gemini Google Search grounding, extracción/deduplicación de fuentes HTTPS y comando del dueño `INVESTIGAR:`.\n- Analista administrativo determinista para snapshots normalizados: reservas por estado, pagos verificados vs reportados e inventario bajo mínimo; sin fuente privada conectada.\n- Planificador conservador de disponibilidad pública con paquetes, jugadores, bloqueos, márgenes de limpieza y parser validado del comando del dueño; no confirma ni bloquea reservas.\n- Auditor general determinista, con resumen de eventos, hallazgos operativos y protección contra exposición de mensajes/teléfonos; comando `AUDITORIA`.
+- Reportes operativos manuales y envío automático diario/semanal configurable, desactivado por defecto.
+- Orquestador central conectado al flujo de atención y revisor determinista de respuestas con pruebas automatizadas.
+- Investigador web con Gemini Google Search grounding, extracción/deduplicación de fuentes HTTPS y comando del dueño `INVESTIGAR:`.
+- Analista administrativo determinista para snapshots normalizados: reservas por estado, pagos verificados vs reportados e inventario bajo mínimo; sin fuente privada conectada.
+- Planificador conservador de disponibilidad pública con paquetes, jugadores, bloqueos, márgenes de limpieza y parser validado del comando del dueño; no confirma ni bloquea reservas.
+- Auditor general determinista, con resumen de eventos, hallazgos operativos y protección contra exposición de mensajes/teléfonos; comando `AUDITORIA`.
 - Dockerfile, Compose, CI y documentación inicial.
 - Pruebas automatizadas ejecutadas por GitHub Actions; esto no sustituye pruebas de integración contra Meta, Gemini, PostgreSQL real ni el sitio de reservas.
 
@@ -65,8 +70,10 @@ No se declarará 80% hasta que estén funcionales y probadas en entorno de integ
 
 ## Próxima secuencia de desarrollo
 
-1. Validar el contrato de disponibilidad con una respuesta real anonimizada del endpoint y probar cierres especiales/partidas abiertas.\n2. Completar scheduler y validación de reportes programados.
+1. Validar el contrato de disponibilidad con una respuesta real anonimizada del endpoint y probar cierres especiales/partidas abiertas.
+2. Completar scheduler y validación de reportes programados.
 3. Implementar herramientas administrativas con contratos y permisos explícitos cuando el negocio entregue la API.
-4. Conectar el proveedor administrativo autenticado y validar su contrato.\n5. Mejorar investigación de mercado con fechas y trazabilidad adicional.
+4. Conectar el proveedor administrativo autenticado y validar su contrato.
+5. Mejorar investigación de mercado con fechas y trazabilidad adicional.
 6. Ampliar revisor para verificar disponibilidad y operaciones autorizadas; completar auditoría de acciones y anomalías.
 7. Completar pruebas de integración, seguridad y despliegue.
