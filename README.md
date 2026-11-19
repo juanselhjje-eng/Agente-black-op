@@ -8,16 +8,18 @@ Proyecto para construir un **Secretario virtual de Black Ops Paintball**: atiend
 - [Integraciones](docs/INTEGRACIONES.md)
 - [Memoria y aprendizaje del dueño](docs/MEMORIA_DEL_DUENO.md)
 - [PostgreSQL y Docker](docs/BASE_DE_DATOS_Y_CONTENEDORES.md)
+- [Respaldos y recuperación](docs/RESPALDOS_Y_RECUPERACION.md)
 
 ## Estado del desarrollo
-Incluye backend, webhook WhatsApp, Gemini, consulta de API pública, escalamiento, memoria correctiva, solicitudes de cambios web y monitor HTTP. El almacenamiento selecciona automáticamente JSON local o PostgreSQL mediante `DATABASE_URL`. Se añadió esquema relacional, índices, transacciones para escrituras críticas y despliegue de referencia con Docker Compose.
+Incluye backend, webhook WhatsApp, Gemini, consulta de API pública, escalamiento, memoria correctiva, solicitudes de cambios web y monitor HTTP. El almacenamiento selecciona JSON local o PostgreSQL mediante `DATABASE_URL`. Se añadió esquema relacional, índices, transacciones para escrituras críticas y despliegue Docker Compose con healthchecks. Hay scripts PowerShell para backup y restauración de PostgreSQL.
 
 **Aún no está conectado a servicios reales ni desplegado.** WhatsApp requiere credenciales Meta; Gemini requiere API key; el monitor requiere URL. La página no se modifica todavía: falta conectar el repositorio/CMS real y staging. Los reportes de ventas, pagos, inventario y reservas privadas requieren API autenticada del negocio.
 
-## Almacenamiento
+## Almacenamiento y despliegue
 - Desarrollo local: JSON con `DATA_DIR`.
 - PostgreSQL: definir `DATABASE_URL`; el esquema se inicializa al arrancar.
 - Docker: revisar `docker-compose.yml` y [la guía de despliegue](docs/BASE_DE_DATOS_Y_CONTENEDORES.md).
+- Respaldos: scripts de `scripts/`; revisar [la guía](docs/RESPALDOS_Y_RECUPERACION.md).
 
 ## Reglas
 1. Todo el código y la documentación se mantienen en este repositorio.
