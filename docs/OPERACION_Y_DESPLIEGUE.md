@@ -40,7 +40,8 @@ Cuando el usuario cree/provisione el servidor y confirme la versión de Windows:
 ## Limitaciones actuales
 - Sin credenciales, no se envían ni reciben mensajes reales de WhatsApp.
 - Sin GEMINI_API_KEY, se usa respuesta de contingencia.
-- La respuesta del dueño por WhatsApp todavía no está implementada: el sistema notifica la pregunta y aplica timeout, pero no asocia una respuesta entrante del dueño con el caso.
+- El dueño autenticado puede responder una escalación con `RESPONDER UUID: respuesta`; el Secretario asocia la respuesta al caso y la reenvía al cliente.
+- El dueño puede enseñar instrucciones en lenguaje natural; Gemini las clasifica y las guarda como memoria persistente local. `APRENDER:` permite guardado explícito sin Gemini. `MEMORIAS` consulta y `OLVIDAR MEMORIA ID_CORTO` desactiva.
 - Los reportes de ventas, pagos, inventario y reservas privadas no están implementados por falta de API autenticada.
 - La investigación web, publicación en Instagram, revisión real del sitio y sincronización de calendario aún requieren integraciones y permisos.
 - Los reportes proactivos diarios/semanales no están implementados.
