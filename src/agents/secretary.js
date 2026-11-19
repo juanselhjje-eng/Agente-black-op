@@ -33,8 +33,8 @@ export function parseOwnerReply(text) {
   const match = String(text || "").trim().match(/^RESPONDER\s+([0-9a-f-]{36})\s*[:|-]\s*([\s\S]+)$/i);
   return match ? { escalationId: match[1], answer: match[2].trim() } : null;
 }
-export function createSecretary({ config, store, whatsapp }) {
-  const subagents = createSubagents(config, { store });
+export function createSecretary({ config, store, whatsapp, subagents: injectedSubagents }) {
+  const subagents = injectedSubagents || createSubagents(config, { store });
   const orchestrator = createOrchestrator({ support: subagents.atencionWhatsApp });
   async function handleWebhook(payload) {
     for (const message of extractMessages(payload)) {
