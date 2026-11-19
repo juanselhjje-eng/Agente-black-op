@@ -7,21 +7,23 @@ Proyecto para construir un **Secretario virtual de Black Ops Paintball**: atiend
 - [Operación y despliegue 24/7](docs/OPERACION_Y_DESPLIEGUE.md)
 - [Integraciones](docs/INTEGRACIONES.md)
 - [Memoria y aprendizaje del dueño](docs/MEMORIA_DEL_DUENO.md)
+- [PostgreSQL y Docker](docs/BASE_DE_DATOS_Y_CONTENEDORES.md)
 
 ## Estado del desarrollo
-Incluye backend inicial, webhook de WhatsApp, integración Gemini, consulta de API pública, escalamiento con espera de dos minutos, memoria correctiva del dueño, registro de solicitudes de cambio web y monitor HTTP periódico configurable para la página.
+Incluye backend, webhook WhatsApp, Gemini, consulta de API pública, escalamiento, memoria correctiva, solicitudes de cambios web y monitor HTTP. El almacenamiento selecciona automáticamente JSON local o PostgreSQL mediante `DATABASE_URL`. Se añadió esquema relacional, índices, transacciones para escrituras críticas y despliegue de referencia con Docker Compose.
 
-El monitor registra disponibilidad, estado HTTP y latencia, conserva historial local y puede avisar al dueño cuando detecta caída o recuperación. Endpoint de consulta: `GET /health/website`.
+**Aún no está conectado a servicios reales ni desplegado.** WhatsApp requiere credenciales Meta; Gemini requiere API key; el monitor requiere URL. La página no se modifica todavía: falta conectar el repositorio/CMS real y staging. Los reportes de ventas, pagos, inventario y reservas privadas requieren API autenticada del negocio.
 
-**No está conectado a servicios reales ni desplegado.** El monitor requiere `WEBSITE_MONITOR_URL`; WhatsApp requiere credenciales Meta; Gemini requiere API key. JSON es almacenamiento de desarrollo de una instancia, no producción multiinstancia.
-
-El Secretario todavía no modifica la página: hace falta conectar el repositorio/CMS real de la web, permisos y staging. La aprobación de una solicitud no publica automáticamente.
+## Almacenamiento
+- Desarrollo local: JSON con `DATA_DIR`.
+- PostgreSQL: definir `DATABASE_URL`; el esquema se inicializa al arrancar.
+- Docker: revisar `docker-compose.yml` y [la guía de despliegue](docs/BASE_DE_DATOS_Y_CONTENEDORES.md).
 
 ## Reglas
-1. Todo el código y la documentación se mantienen en este repositorio GitHub.
+1. Todo el código y la documentación se mantienen en este repositorio.
 2. Nunca subir secretos.
 3. No inventar precios, disponibilidad, pagos, reservas ni políticas.
-4. Las guías del dueño se recuerdan, con historial de correcciones.
+4. Las guías del dueño se recuerdan con historial de correcciones.
 5. No ejecutar cambios de producción sin vista previa, pruebas y aprobación explícita.
 6. Los datos privados y operaciones requieren APIs autenticadas.
 
@@ -32,6 +34,6 @@ npm install
 npm test
 npm run dev
 ```
-Consulta `http://127.0.0.1:3000/health` y, cuando el monitor esté configurado, `http://127.0.0.1:3000/health/website`.
+Consulta `http://127.0.0.1:3000/health` y `/health/website`.
 
 Repositorio: https://github.com/juanselhjje-eng/Agente-black-op
