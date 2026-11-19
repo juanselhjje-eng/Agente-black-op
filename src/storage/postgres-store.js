@@ -141,6 +141,29 @@ export function createPostgresStore({ connectionString, pool, max = 10 }) {
       const r = await query("SELECT data FROM blackops_website_checks ORDER BY checked_at DESC,id DESC LIMIT $1", [Math.max(1,Math.min(100,limit))]);
       return r.rows.map(row => row.data).reverse();
     },
+    async getOperationalMetrics(start, end) {
+      const r = await query(`
+        SELECT
+          (SELECT COUNT(*)::int FROM blackops_messages WHERE stored_at >= $1 AND stored_at < $2) AS inbound_messages,
+          (SELECT COUNT(*)::int FROM blackops_audit WHERE at >= $1 AND at < $2 AND event->>'type'='outgoing_message') AS outbound_messages,
+          (SELECT COUNT(*)::int FROM blackops_escalations WHERE created_at >= $1 AND created_at < $2) AS escalations_opened,
+          (SELECT COUNT(*)::int FROM blackops_escalations WHERE created_at >= $1 AND created_at < $2 AND status='answered') AS escalations_answered,
+          (SELECT COUNT(*)::int FROM blackops_escalations WHERE created_at >= $1 AND created_at < $2 AND status='timed_out') AS escalations_timed_out,
+          (SELECT COUNT(*)::int FROM blackops_escalations WHERE status='pending') AS escalations_pending,
+          (SELECT COUNT(*)::int FROM blackops_website_checks WHERE checked_at >= $1 AND checked_at < $2) AS website_checks,
+          (SELECT COUNT(*)::int FROM blackops_website_checks WHERE checked_at >= $1 AND checked_at < $2 AND ok=FALSE) AS website_failures,
+          (SELECT COUNT(*)::int FROM blackops_web_changes WHERE status='pending_review') AS web_changes_pending,
+          (SELECT COUNT(*)::int FROM blackops_web_changes WHERE status='approved_pending_integration') AS web_changes_approved_pending
+      `, [start, end]);
+      const row = r.rows[0];
+      return {
+        inboundMessages: row.inbound_messages, outboundMessages: row.outbound_messages,
+        escalationsOpened: row.escalations_opened, escalationsAnswered: row.escalations_answered,
+        escalationsTimedOut: row.escalations_timed_out, escalationsPending: row.escalations_pending,
+        websiteChecks: row.website_checks, websiteFailures: row.website_failures,
+        webChangesPending: row.web_changes_pending, webChangesApprovedPending: row.web_changes_approved_pending
+      };
+    },
     async audit(event) { await query("INSERT INTO blackops_audit(event) VALUES($1)", [event]); },
     async listAudit(limit = 100) {
       const r = await query("SELECT event,at FROM blackops_audit ORDER BY id DESC LIMIT $1", [Math.max(1,Math.min(1000,limit))]);
