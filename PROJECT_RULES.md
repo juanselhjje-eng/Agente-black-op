@@ -16,7 +16,7 @@
 - IA: Google Gemini API mediante `@google/genai`.
 - Canal: WhatsApp Business Cloud API.
 - Despliegue objetivo: Windows Server (versión pendiente de identificar).
-- Siete responsabilidades de agente coordinadas por un orquestador; inicialmente módulos dentro de una aplicación, no siete servidores separados.
+- Un agente principal —el Secretario de Black Ops— coordina subagentes especializados (atención WhatsApp, supervisión web/agenda, investigación web, análisis administrativo/comercial, revisión y auditoría). Inicialmente son módulos dentro de una aplicación, no agentes principales ni servidores separados.
 - Base de datos e integraciones administrativas pendientes de confirmar con el cliente.
 
 ## Seguridad
