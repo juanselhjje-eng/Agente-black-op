@@ -1,30 +1,35 @@
 # Integraciones y contratos internos
 
 ## API pública de Black Ops
-El PDF funcional documenta una API POST que recibe un objeto `{ method: "GET", path }`:
+El PDF funcional documenta una API POST que recibe `{ method: "GET", path }` para consultar:
 - `/api/public/config`
 - `/api/public/availability?from=YYYY-MM-DD&to=YYYY-MM-DD`
 
-El módulo `src/integrations/blackops-api.js` implementa únicamente esas consultas GET encapsuladas en POST. Está deshabilitado por defecto. Para habilitarlo se deben configurar `BLACKOPS_PUBLIC_API_BASE_URL` y `BLACKOPS_API_ENABLED=true`, después de confirmar con el desarrollador del sitio que la URL y el contrato siguen vigentes.
+El módulo `src/integrations/blackops-api.js` implementa únicamente esas consultas GET encapsuladas en POST. Está deshabilitado por defecto. Confirmar con el desarrollador que la URL y el contrato siguen vigentes.
 
-No implementa escritura, autenticación, pagos, inventario ni lectura privada de reservas. No se debe inferir disponibilidad final sin aplicar el margen de 30 minutos entre partidas y validar cierres/bloqueos.
+No implementa escritura, autenticación, pagos, inventario ni lectura privada de reservas. No inferir disponibilidad final sin aplicar márgenes y bloqueos.
+
+## Memoria del dueño
+Solo el número autenticado en `OWNER_WHATSAPP_NUMBER` puede enseñar reglas.
+- Mensaje natural: el Secretario clasifica la instrucción y guarda una guía.
+- `APRENDER: regla`, `MEMORIAS`, `OLVIDAR MEMORIA ID_CORTO`.
+- Una corrección actualiza la guía previa solo si su ID se identifica con alta confianza; se conserva historial en `revisions`.
+- Las guías se cargan antes de responder clientes. No prevalecen sobre seguridad, privacidad ni hechos verificados.
+
+## Cambios de la página web
+El dueño puede pedir un cambio en lenguaje natural. El Secretario lo registra en `webChangeRequests` sin modificar la página.
+- `CAMBIO WEB: descripción`: crea una solicitud.
+- `CAMBIOS WEB`: lista solicitudes abiertas.
+- `APROBAR CAMBIO ID_CORTO`: autoriza la solicitud para implementación controlada; no publica por sí solo.
+
+La implementación real necesita conocer y conectar el repositorio, CMS o constructor de la web, credenciales de mínimo privilegio y un entorno de pruebas. La API pública documentada no permite editar el sitio. El flujo de publicación debe usar rama, diff, vista previa, pruebas, aprobación explícita final, backup/rollback y auditoría.
 
 ## Respuesta del dueño a una escalación
-El dueño debe usar el mismo número configurado en `OWNER_WHATSAPP_NUMBER`. El Secretario solo procesa comandos de ese remitente.
-
 Formato:
 ```
 RESPONDER <UUID_DE_LA_CONSULTA>: texto de respuesta
 ```
+Solo el dueño configurado puede contestar consultas pendientes; el Secretario asocia la respuesta al caso y la reenvía al cliente.
 
-Si la consulta sigue pendiente, el Secretario la marca como respondida y reenvía el texto al cliente. Si venció o ya fue respondida, informa al dueño que no está pendiente. Este flujo necesita que la integración de WhatsApp esté configurada y que el número del dueño esté autorizado.
-
-
-## Memoria del dueño
-El Secretario recibe mensajes del dueño únicamente desde el número configurado y autenticado. Puede guardar instrucciones y preferencias para futuras respuestas:
-- Mensaje natural: "Quiero que cuando un cliente pregunte por X, le expliques primero Y". Gemini identifica si es una regla estable, la resume fielmente y la guarda.
-- Guardado explícito: `APRENDER: regla que debe recordar`.
-- Consultar: `MEMORIAS`.
-- Desactivar: `OLVIDAR MEMORIA ID_CORTO`.
-
-Las guías se cargan antes de cada respuesta a clientes. Nunca pueden prevalecer sobre seguridad, privacidad ni hechos verificados. El almacenamiento JSON es temporal de desarrollo; migrar a base de datos gestionada antes de producción.
+## Estado
+No hay conexión de escritura a la web, despliegue productivo ni credenciales reales. No afirmar que cambios o integraciones se han ejecutado hasta verificarlos.
