@@ -1,4 +1,3 @@
-const BOGOTA_OFFSET = "-05:00";
 function localDateParts(date, timeZone) {
   const parts = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(date);
   return Object.fromEntries(parts.filter(part => part.type !== "literal").map(part => [part.type, part.value]));
@@ -7,6 +6,17 @@ function shiftDate(key, days) {
   const date = new Date(`${key}T12:00:00Z`);
   date.setUTCDate(date.getUTCDate() + days);
   return date.toISOString().slice(0, 10);
+}
+function zonedMidnightUtc(dateKey, timeZone) {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  const target = Date.UTC(year, month - 1, day);
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone, year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23"
+  }).formatToParts(new Date(target));
+  const p = Object.fromEntries(parts.filter(part => part.type !== "literal").map(part => [part.type, part.value]));
+  const represented = Date.UTC(Number(p.year), Number(p.month) - 1, Number(p.day), Number(p.hour), Number(p.minute), Number(p.second));
+  return new Date(target - (represented - target));
 }
 export function getReportRange(period = "daily", now = new Date(), timeZone = "America/Bogota") {
   if (!["daily", "weekly"].includes(period)) throw new TypeError("El periodo debe ser daily o weekly.");
@@ -17,8 +27,8 @@ export function getReportRange(period = "daily", now = new Date(), timeZone = "A
   const first = period === "daily" ? today : monday;
   const last = period === "daily" ? today : shiftDate(monday, 6);
   return {
-    start: new Date(`${first}T00:00:00${BOGOTA_OFFSET}`),
-    end: new Date(`${shiftDate(last, 1)}T00:00:00${BOGOTA_OFFSET}`),
+    start: zonedMidnightUtc(first, timeZone),
+    end: zonedMidnightUtc(shiftDate(last, 1), timeZone),
     label: period === "daily" ? `Día ${first}` : `Semana ${first} a ${last}`,
     timeZone
   };
