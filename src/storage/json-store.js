@@ -5,8 +5,8 @@ export function createStore(directory) {
   const file = path.join(directory, "state.json");
   let queue = Promise.resolve();
   async function read() {
-    try { return { messages: [], escalations: [], audit: [], ownerMemories: [], webChangeRequests: [], websiteChecks: [], ...JSON.parse(await fs.readFile(file, "utf8")) }; }
-    catch (error) { if (error.code === "ENOENT") return { messages: [], escalations: [], audit: [], ownerMemories: [], webChangeRequests: [], websiteChecks: [] }; throw error; }
+    try { return { messages: [], escalations: [], audit: [], ownerMemories: [], webChangeRequests: [], websiteChecks: [], reservationRequests: [], ...JSON.parse(await fs.readFile(file, "utf8")) }; }
+    catch (error) { if (error.code === "ENOENT") return { messages: [], escalations: [], audit: [], ownerMemories: [], webChangeRequests: [], websiteChecks: [], reservationRequests: [] }; throw error; }
   }
   async function write(state) {
     await fs.mkdir(directory, { recursive: true });
@@ -61,6 +61,19 @@ export function createStore(directory) {
       const item = state.ownerMemories.find(entry => entry.id === id && entry.active);
       if (!item) return null;
       item.active = false; item.updatedAt = new Date().toISOString(); return item;
+    }),
+    createReservationRequest: input => mutate(state => {
+      const item = { id: randomUUID(), status: "pending_owner_review", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), ...input };
+      state.reservationRequests ||= []; state.reservationRequests.push(item); return item;
+    }),
+    async listReservationRequests({ activeOnly = true } = {}) {
+      const items = (await read()).reservationRequests || [];
+      return items.filter(item => !activeOnly || ["pending_owner_review", "owner_contacted"].includes(item.status));
+    },
+    updateReservationRequest: (id, status, details = {}) => mutate(state => {
+      const item = (state.reservationRequests || []).find(entry => entry.id === id && ["pending_owner_review", "owner_contacted"].includes(entry.status));
+      if (!item || !["owner_contacted", "closed"].includes(status)) return null;
+      Object.assign(item, details, { status, updatedAt: new Date().toISOString() }); return item;
     }),
     createWebChangeRequest: input => mutate(state => {
       const item = { id: randomUUID(), status: "pending_review", createdAt: new Date().toISOString(), requestedBy: "owner", ...input };
