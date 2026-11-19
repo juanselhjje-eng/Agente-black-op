@@ -169,10 +169,10 @@ export function ownerPaymentReportMessage({ customer, reportedAmountCop } = {}) 
 export function isCustomerPaymentInfoRequest(value) {
   const text = String(value || "").trim();
   if (!text || text.length > 1000 || parseCustomerPaymentReport(text)) return false;
-  const normalized = text.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase();
-  return /\\b(?:como|donde|cual|que|cuales)\\b/.test(normalized) &&
-    /\\b(?:pagar|pago|pagos|nequi|transferencia|consignar|consignacion|efectivo|anticipo|metodos de pago|medios de pago)\\b/.test(normalized) ||
-    /\\b(?:medios de pago|metodos de pago|formas de pago|aceptan nequi|puedo pagar en efectivo)\\b/.test(normalized);
+  const normalized = text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  return /\b(?:como|donde|cual|que|cuales)\b/.test(normalized) &&
+    /\b(?:pagar|pago|pagos|nequi|transferencia|consignar|consignacion|efectivo|anticipo|metodos de pago|medios de pago)\b/.test(normalized) ||
+    /\b(?:medios de pago|metodos de pago|formas de pago|aceptan nequi|puedo pagar en efectivo)\b/.test(normalized);
 }
 
 export function customerPaymentInstructionsMessage() {
@@ -186,5 +186,5 @@ export function customerPaymentInstructionsMessage() {
     "Antes de transferir, confirma con el equipo el valor correspondiente a tu paquete y los datos de tu solicitud. Envíanos el soporte por el canal indicado.",
     "Importante: enviar un comprobante o reportar el pago no confirma automáticamente la reserva. El equipo debe verificar el movimiento y confirmar la programación.",
     "Atención: 311 334 8774."
-  ].join("\\n");
+  ].join("\n");
 }
