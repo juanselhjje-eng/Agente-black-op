@@ -1,28 +1,39 @@
 # Memoria y aprendizaje del Secretario
 
-## Cómo aprende del dueño
-Solo el número autenticado en `OWNER_WHATSAPP_NUMBER` puede enseñar reglas y preferencias. Cuando el dueño escribe una instrucción en lenguaje natural, el módulo de aprendizaje de Gemini identifica si es una regla estable para futuras conversaciones. Si la instrucción es clara y tiene confianza suficiente, el Secretario la guarda en `ownerMemories` y confirma qué entendió.
+## Aprender y corregir guías
+Solo el número autenticado en `OWNER_WHATSAPP_NUMBER` puede enseñar reglas y preferencias. Gemini identifica instrucciones estables en lenguaje natural y las guarda en `ownerMemories`.
 
-Ejemplo de conversación:
-- Dueño: "Quiero que cuando un cliente pregunte por una actividad para cumpleaños, le expliques primero cómo funciona la experiencia y luego le presentes los paquetes disponibles."
-- Secretario: "Entendido. Guardé esta guía para futuras conversaciones con clientes..."
+- `APRENDER: regla`: guarda una guía explícita.
+- `MEMORIAS`: consulta las guías activas.
+- `OLVIDAR MEMORIA ID_CORTO`: desactiva una guía sin borrar el historial.
 
-También se puede guardar de forma explícita sin interpretación de IA:
-```
-APRENDER: Cuando pregunten por cumpleaños, explica primero la experiencia y luego presenta los paquetes.
-```
+Cuando el dueño corrige una regla anterior, el clasificador puede actualizarla si identifica el ID de la guía con alta confianza. La versión anterior se conserva en `revisions`, con fecha y texto. Si no puede identificar inequívocamente la guía, no debe sobrescribirla; debe pedir precisión o guardar una guía nueva.
 
-## Consultar y corregir
-- `MEMORIAS`: muestra las últimas guías activas guardadas.
-- `OLVIDAR MEMORIA ID_CORTO`: desactiva una guía; no elimina el registro histórico.
-- Si el dueño expresa una corrección, el módulo debe guardar la regla corregida como una guía nueva. No borra otras reglas automáticamente.
+## Solicitudes de cambios en la página
+El dueño también puede pedir cambios de la web en lenguaje natural, por ejemplo: "No me gusta el botón principal; quiero que sea más visible y diga Reservar ahora". El Secretario registra el pedido en `webChangeRequests`, con resumen, elemento objetivo, resultado esperado y criterios de aceptación cuando se puedan identificar.
 
-## Aplicación en conversaciones
-Antes de responder a cada cliente, el Secretario carga las guías activas y se las pasa al subagente de Atención WhatsApp. Las guías orientan tono, forma de explicar, prioridades comerciales y procesos. Se aplican en cada nueva conversación mientras estén activas.
+Comandos:
+- `CAMBIO WEB: descripción del cambio`: registra una solicitud sin Gemini.
+- `CAMBIOS WEB`: muestra solicitudes pendientes.
+- `APROBAR CAMBIO ID_CORTO`: aprueba la solicitud para implementación controlada.
 
-## Límites y seguridad
-- El aprendizaje automático depende de Gemini y de que el dueño esté correctamente autenticado por número.
-- Si Gemini no está configurado, el comando explícito `APRENDER:` sigue funcionando.
-- Las instrucciones del dueño no pueden autorizar invenciones, falsos estados de pago/reserva, divulgación de datos privados ni acciones sin permisos.
-- El almacenamiento actual es un JSON local de desarrollo. Antes de operar 24/7 en producción, migrar a base de datos persistente con copias de seguridad.
-- No guardar contraseñas, tokens, claves, datos bancarios secretos ni datos personales sensibles.
+**Importante:** el flujo actual registra y aprueba solicitudes, pero todavía no edita la página. No existe conexión al repositorio/constructor real del sitio ni entorno de staging. La URL/API pública documentada solo consulta configuración y disponibilidad; no concede permisos de escritura.
+
+## Cómo se implementará la edición real
+Antes de conectar la web, se debe identificar dónde vive el código (repositorio Git, constructor visual o CMS) y obtener permisos específicos. El flujo esperado será:
+1. Interpretar el cambio y aclarar ambigüedades.
+2. Crear una rama de trabajo y modificar solo los componentes necesarios.
+3. Mostrar diff y vista previa en staging.
+4. Ejecutar pruebas de interfaz, enlaces, formularios, accesibilidad y regresión.
+5. Pedir aprobación explícita final para publicar en producción.
+6. Publicar, comprobar el resultado y mantener rollback/respaldo.
+7. Guardar la decisión de diseño como preferencia si el dueño la expresa como regla general.
+
+No se debe permitir que una instrucción ambigua cambie precios, pagos, reservas, términos, privacidad o seguridad. Estos cambios requieren revisión reforzada.
+
+## Aplicación y límites
+Las guías activas se incorporan a futuras respuestas de clientes. No pueden autorizar mentiras, estados de pago/reserva falsos, divulgación de datos privados ni acciones sin permisos.
+No guardar contraseñas, tokens, claves ni datos bancarios secretos.
+
+## Persistencia
+El almacenamiento actual es JSON local para desarrollo de una instancia. Antes de operar 24/7, migrar a base de datos persistente, con backups, control de acceso y auditoría.
