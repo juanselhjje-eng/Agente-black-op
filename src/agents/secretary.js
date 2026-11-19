@@ -14,7 +14,7 @@ export function parseOwnerReply(text) {
   return match ? { escalationId: match[1], answer: match[2].trim() } : null;
 }
 export function createSecretary({ config, store, whatsapp }) {
-  const subagents = createSubagents(config);
+  const subagents = createSubagents(config, { store });
   const orchestrator = createOrchestrator({ support: subagents.atencionWhatsApp });
   async function handleWebhook(payload) {
     for (const message of extractMessages(payload)) {
@@ -85,6 +85,24 @@ export function createSecretary({ config, store, whatsapp }) {
       } catch (error) {
         await whatsapp.sendText(message.from, "No pude consultar la disponibilidad pública: " + String(error?.message || "error").slice(0, 240));
         await store.audit({ type: "owner_availability_query_failed", date, reason: String(error?.message || "unknown").slice(0, 240) });
+      }
+      return;
+    }
+    if (/^AUDITORIA(?: HOY)?$/i.test(text)) {
+      try {
+        const since = new Date(Date.now() - 86400000).toISOString();
+        const report = await subagents.auditorGeneral.getReport({ since, limit: 1000 });
+        if (report.status !== "completed") {
+          await whatsapp.sendText(message.from, report.message);
+        } else {
+          const summary = report.summary;
+          const findings = summary.findings.map(item => "• [" + item.severity.toUpperCase() + "] " + item.message + " (" + item.count + ")");
+          const types = Object.entries(summary.eventTypes).slice(0, 8).map(([type,count]) => "• " + type + ": " + count);
+          await whatsapp.sendText(message.from, ["AUDITORÍA OPERATIVA — ÚLTIMAS 24 HORAS", "Eventos analizados: " + summary.eventCount, "Fallos registrados: " + summary.counts.failures, "Escalamientos urgentes: " + summary.counts.urgent, "Consultas vencidas: " + summary.counts.ownerTimeouts, findings.length ? "HALLAZGOS:\\n" + findings.join("\\n") : "Sin hallazgos de alerta en los eventos consultados.", types.length ? "ACTIVIDAD PRINCIPAL:\\n" + types.join("\\n") : "", summary.privacy].filter(Boolean).join("\\n\\n"));
+        }
+        await store.audit({ type: "owner_audit_report_requested", eventCount: report.summary?.eventCount || 0, findings: report.summary?.findings?.length || 0 });
+      } catch (error) {
+        await whatsapp.sendText(message.from, "No pude generar la auditoría: " + String(error?.message || "error").slice(0, 200));
       }
       return;
     }
