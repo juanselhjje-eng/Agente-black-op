@@ -130,10 +130,20 @@ Consideraciones técnicas:
 
 ## 5. Arquitectura técnica recomendada
 
+### Decisión tecnológica: Gemini API
+- Proveedor de IA seleccionado: **Google Gemini API**.
+- SDK recomendado para JavaScript/Node.js: `@google/genai` (Google Gen AI SDK oficial).
+- La clave se guardará como secreto de entorno (`GEMINI_API_KEY`) en el servidor/hosting. Nunca se sube al repositorio, al frontend, a WhatsApp ni a los prompts.
+- El modelo concreto se define mediante configuración (`GEMINI_MODEL`) para poder cambiarlo sin reescribir los agentes. La selección debe considerar calidad, latencia, coste, límites y disponibilidad de funciones requeridas.
+- Usar function calling para que Gemini solicite operaciones como consultar reservas, ventas, pagos, inventario, estado de la web o investigación. Las funciones reales viven en Node.js y aplican autenticación, validación, permisos, límites y auditoría.
+- Gemini propone qué herramienta necesita; **no ejecuta directamente SQL, no accede por sí solo a sistemas externos y no debe recibir secretos**.
+- Mantener la lógica de negocio determinista (cálculos de ventas, saldos, stock, disponibilidad y temporizadores) en código/servicios; usar Gemini para interpretar, resumir y explicar resultados.
+
+
 ### Componentes
 - **WhatsApp Business Platform / Cloud API:** entrada de mensajes por webhook y envío de respuestas. Requiere número, cuenta de Meta Business, aplicación, token y configuración de webhook.
 - **Node.js + JavaScript:** servidor, webhooks, lógica conversacional, orquestación y módulos de agentes.
-- **Gemini API:** interpretación, clasificación, generación y apoyo a agentes. La salida del modelo debe estar limitada por herramientas y fuentes autorizadas.
+- **Gemini API:** motor de IA para interpretación, clasificación, generación, análisis y coordinación de tareas. En Node.js se recomienda el SDK oficial `@google/genai`; la integración debe usar la API y el modelo configurados para el proyecto. Gemini puede solicitar herramientas mediante function calling, pero Node.js valida permisos, ejecuta cada función y devuelve resultados al modelo. La salida del modelo debe estar limitada por fuentes y herramientas autorizadas.
 - **Base de datos:** negocio/configuración, conversaciones, casos pendientes, reservas consultadas, tareas, logs y auditoría. El PDF menciona Supabase; confirmar si se reutilizará el proyecto Supabase existente.
 - **Cola/worker y scheduler:** vencimiento de 2 minutos, tareas periódicas, resúmenes y vigilancia. Puede implementarse con un worker persistente/cola compatible con el hosting.
 - **API pública del sitio/Supabase:** según el PDF, expone configuración pública y disponibilidad. No se documenta acceso público a ventas, pagos, inventario ni detalles privados de reservas.
@@ -250,7 +260,8 @@ Si la página todavía no está construida, estos módulos deben contemplarse de
 
 ## 9. Preguntas que el cliente/desarrollador debe cerrar
 
-1. ¿El número de WhatsApp ya está registrado en WhatsApp Business Platform o se debe hacer el alta?
+1. Crear/provisionar el proyecto de Google AI Studio y la clave de Gemini API en un gestor de secretos; elegir y probar el modelo inicial.
+2. ¿El número de WhatsApp ya está registrado en WhatsApp Business Platform o se debe hacer el alta?
 2. ¿Cuál es el número de WhatsApp del dueño para recibir escalaciones y reportes? ¿Es distinto del número público 311 334 8774?
 3. ¿Cómo contestará el dueño la consulta: texto libre, comando con ID o botón/respuesta estructurada?
 4. ¿Qué hacer con respuestas del dueño que lleguen después de los dos minutos?
