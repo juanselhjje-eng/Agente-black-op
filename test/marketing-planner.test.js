@@ -17,7 +17,7 @@ test("crea un calendario con ideas y fuentes separadas sin publicar", async () =
 });
 test("no crea calendario vacío ni sin dependencias", async () => {
   assert.equal(createMarketingPlanner().isConfigured(),false);
-  await assert.rejects(()=>createMarketingPlanner().createCalendar("campaña"),/requiere Gemini/);
+  assert.equal((await createMarketingPlanner().createCalendar("campaña")).status,"unavailable");
   const planner=createMarketingPlanner({ai:{models:{generateContent:async()=>({text:"{}"})}},researcher:{research:async()=>({status:"no_results",sources:[]})}});
   await assert.rejects(()=>planner.createCalendar("campaña"),/calendario de contenido válido/);
 });
