@@ -39,3 +39,12 @@ En producción se exige `WHATSAPP_APP_SECRET`; sin él el endpoint rechaza los w
 
 ## Estado
 No hay conexión de escritura a la web, despliegue productivo ni credenciales reales. No afirmar que cambios o integraciones se han ejecutado hasta verificarlos.
+
+
+## Investigación web del dueño
+El subagente investigador usa Gemini con Google Search grounding. El dueño puede enviar por WhatsApp:
+```
+INVESTIGAR: competidores de paintball en Antioquia
+INVESTIGAR: tendencias recientes de experiencias recreativas y contenido para Instagram
+```
+La respuesta incluye resumen y enlaces HTTPS que Gemini devuelve como fuentes de grounding. Si no hay fuentes verificables, el resultado lo advierte y no debe tratarse como hecho confirmado. La disponibilidad depende de `GEMINI_API_KEY`, del modelo configurado y de que Google Search grounding esté habilitado para ese modelo/cuenta. No publica contenido ni ejecuta campañas.
