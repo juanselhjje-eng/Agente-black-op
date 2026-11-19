@@ -42,7 +42,7 @@ export function createSecretary({ config, store, whatsapp }) {
         await handleOwnerMessage(message); continue;
       }
       const availabilityRequest = parseCustomerAvailabilityRequest(message.text);
-      const availabilityIntent = /\\b(disponibilidad|horarios|reservar|reserva)\\b/i.test(message.text);
+      const availabilityIntent = /\b(disponibilidad|horarios|reservar|reserva)\b/i.test(message.text);
       if (availabilityIntent && !availabilityRequest) {
         await whatsapp.sendText(message.from, "Para revisar horarios, envíanos la fecha exacta en formato AAAA-MM-DD y la cantidad de jugadores (de 2 a 10). Ejemplo: disponibilidad 2026-11-20 para 4 personas tactical. Los horarios se confirman con el equipo.");
         await store.audit({ type:"customer_availability_details_requested" });
