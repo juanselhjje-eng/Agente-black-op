@@ -5,7 +5,7 @@ const CONTACT = "Para atención directa, escríbenos al 311 334 8774.";
 export function classifyCustomerMessage(message) {
   const text = String(message || "").trim();
   if (URGENT.test(text)) return { intent: "urgent_human", urgent: true, needsOwner: true };
-  if (/\b(disponibilidad|hay cupo|reservar|reserva|agendar|fecha|horario)\b/i.test(text)) return { intent: "booking_guidance", urgent: false, needsOwner: false };
+  if (/\b(disponibilidad|hay cupo|reservar|reserva|agendar|fecha|horario)\b/i.test(text)) return { intent: "booking_guidance", urgent: false, needsOwner: true };
   if (/\b(precio|precios|paquete|paquetes|valor|cu[aá]nto cuesta)\b/i.test(text)) return { intent: "pricing", urgent: false, needsOwner: false };
   if (/\b(pagu[eé]|pago|nequi|comprobante|transferencia|reembolso|devoluci[oó]n)\b/i.test(text)) return { intent: "payment", urgent: false, needsOwner: true };
   if (/\b(inventario|stock|existencias|ventas del d[ií]a|ingresos|facturaci[oó]n)\b/i.test(text)) return { intent: "private_business_data", urgent: false, needsOwner: true };
