@@ -5,8 +5,8 @@ export function createStore(directory) {
   const file = path.join(directory, "state.json");
   let queue = Promise.resolve();
   async function read() {
-    try { return { messages: [], escalations: [], audit: [], ownerMemories: [], webChangeRequests: [], ...JSON.parse(await fs.readFile(file, "utf8")) }; }
-    catch (error) { if (error.code === "ENOENT") return { messages: [], escalations: [], audit: [], ownerMemories: [], webChangeRequests: [] }; throw error; }
+    try { return { messages: [], escalations: [], audit: [], ownerMemories: [], webChangeRequests: [], websiteChecks: [], ...JSON.parse(await fs.readFile(file, "utf8")) }; }
+    catch (error) { if (error.code === "ENOENT") return { messages: [], escalations: [], audit: [], ownerMemories: [], webChangeRequests: [], websiteChecks: [] }; throw error; }
   }
   async function write(state) {
     await fs.mkdir(directory, { recursive: true });
@@ -53,15 +53,10 @@ export function createStore(directory) {
       if (!item || !text) return null;
       if (item.text.toLowerCase() === text.toLowerCase()) return { ...item, duplicate: true };
       item.revisions = [...(item.revisions || []), { text: item.text, category: item.category, replacedAt: new Date().toISOString(), sourceMessage: item.sourceMessage || "" }];
-      item.text = text;
-      item.category = input.category || item.category;
-      item.sourceMessage = input.sourceMessage || item.sourceMessage;
-      item.updatedAt = new Date().toISOString();
+      item.text = text; item.category = input.category || item.category; item.sourceMessage = input.sourceMessage || item.sourceMessage; item.updatedAt = new Date().toISOString();
       return item;
     }),
-    async listOwnerMemories({ activeOnly = true } = {}) {
-      return (await read()).ownerMemories.filter(item => !activeOnly || item.active);
-    },
+    async listOwnerMemories({ activeOnly = true } = {}) { return (await read()).ownerMemories.filter(item => !activeOnly || item.active); },
     deactivateOwnerMemory: id => mutate(state => {
       const item = state.ownerMemories.find(entry => entry.id === id && entry.active);
       if (!item) return null;
@@ -78,11 +73,19 @@ export function createStore(directory) {
     approveWebChangeRequest: (id, approvedBy) => mutate(state => {
       const item = state.webChangeRequests.find(entry => entry.id === id && entry.status === "pending_review");
       if (!item) return null;
-      item.status = "approved_pending_integration";
-      item.approvedBy = approvedBy;
-      item.approvedAt = new Date().toISOString();
+      item.status = "approved_pending_integration"; item.approvedBy = approvedBy; item.approvedAt = new Date().toISOString();
       return item;
     }),
+    saveWebsiteCheck: result => mutate(state => {
+      state.websiteChecks.push(result);
+      state.websiteChecks = state.websiteChecks.slice(-500);
+      return result;
+    }),
+    async getLatestWebsiteCheck() {
+      const items = (await read()).websiteChecks;
+      return items.at(-1) || null;
+    },
+    async listWebsiteChecks(limit = 20) { return (await read()).websiteChecks.slice(-Math.max(1, Math.min(100, limit))); },
     audit: event => mutate(state => {
       state.audit.push({ ...event, at: new Date().toISOString() }); state.audit = state.audit.slice(-10000);
     })
