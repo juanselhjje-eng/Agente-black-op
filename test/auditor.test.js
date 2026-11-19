@@ -8,10 +8,13 @@ test("resume eventos sin exponer contenido personal", () => {
     { type:"owner_escalation_timeout" },
     { type:"website_status_changed", ok:false },
     { type:"owner_web_research_failed" },
-    { type:"owner_availability_query_failed" }
+    { type:"owner_availability_query_failed" },
+    { type:"customer_payment_reported_unverified", amountMentioned:true }
   ]);
-  assert.equal(summary.eventCount,5);
+  assert.equal(summary.eventCount,6);
   assert.equal(summary.counts.failures,4);
+  assert.equal(summary.counts.paymentReportsPending,1);
+  assert.equal(summary.findings.find(item=>item.code==="payment_reports_pending").count,1);
   assert.equal(summary.findings.find(item=>item.code==="website_down_event").severity,"critical");
   assert.match(summary.privacy,/no reproduce teléfonos/);
   assert.equal(JSON.stringify(summary).includes("573001112233"),false);
