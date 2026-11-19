@@ -33,6 +33,7 @@ app.get("/health", async (_req, res) => {
     role: "secretario-principal",
     storage: database,
     subagents: ["atencion-whatsapp", "supervisor-web-agenda", "investigador-web", "analista-administrativo", "revisor", "auditor-general"],
+    orchestration: { customerRouter: true, deterministicResponseReview: true },
     integrations: {
       gemini: Boolean(config.geminiApiKey),
       whatsapp: whatsapp.isConfigured(),
