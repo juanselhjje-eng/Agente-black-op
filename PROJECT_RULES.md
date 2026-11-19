@@ -17,7 +17,8 @@
 - Canal: WhatsApp Business Cloud API.
 - Despliegue objetivo: Windows Server (versión pendiente de identificar).
 - Un agente principal —el Secretario de Black Ops— coordina subagentes especializados (atención WhatsApp, supervisión web/agenda, investigación web, análisis administrativo/comercial, revisión y auditoría). Inicialmente son módulos dentro de una aplicación, no agentes principales ni servidores separados.
-- Base de datos e integraciones administrativas pendientes de confirmar con el cliente.
+- Memoria persistente de instrucciones y preferencias del dueño; las guías se incorporan a futuras respuestas y nunca pueden contradecir seguridad, privacidad o hechos verificados.
+- Base de datos de producción e integraciones administrativas pendientes de confirmar con el cliente.
 
 ## Seguridad
 - Las claves y tokens se guardan como variables de entorno en el servidor.
