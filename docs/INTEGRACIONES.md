@@ -77,3 +77,9 @@ El resultado son candidatos calculados, no reservas bloqueadas ni confirmadas. L
 
 ## Auditor general
 El módulo `src/agents/auditor.js` resume los últimos eventos de auditoría sin devolver mensajes, teléfonos ni datos personales. Cuenta tipos de evento e identifica alertas por caídas web, timeouts de escalamiento, fallos de investigación y errores de consulta de disponibilidad. El dueño puede solicitar por WhatsApp `AUDITORIA` o `AUDITORIA HOY`; ambos consultan las últimas 24 horas y presentan conteos/hallazgos. Es auditoría operativa basada en eventos existentes, no una certificación contable, revisión de transacciones privadas ni prueba de que un humano atendió cada caso.
+
+
+## Planificador de marketing e Instagram
+El subagente `planificadorMarketing` combina investigación web fundamentada con generación de un calendario de hasta siete publicaciones. El dueño lo solicita por WhatsApp con `MARKETING: objetivo o tema`. Cada propuesta incluye objetivo, formato, gancho, concepto, caption, CTA, brief visual y métrica sugerida; adjunta fuentes HTTPS si el investigador las obtuvo.
+
+El resultado se etiqueta siempre como borrador y no se publica ni programa. Si no hay fuentes, las propuestas se presentan como ideas creativas, no como tendencias o hechos verificados. Antes de publicar, una persona debe validar precios, promociones, disponibilidad, políticas, derechos de imagen y autorización de uso de contenido. No existe todavía conexión con Instagram Graph API ni permisos para publicar.
