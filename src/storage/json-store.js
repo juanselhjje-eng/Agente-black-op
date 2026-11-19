@@ -86,6 +86,7 @@ export function createStore(directory) {
       return items.at(-1) || null;
     },
     async listWebsiteChecks(limit = 20) { return (await read()).websiteChecks.slice(-Math.max(1, Math.min(100, limit))); },
+    async listAudit(limit = 100) { return (await read()).audit.slice(-Math.max(1, Math.min(1000, limit))); },
     async getOperationalMetrics(start, end) {
       const state = await read();
       const inRange = value => value && new Date(value) >= start && new Date(value) < end;
