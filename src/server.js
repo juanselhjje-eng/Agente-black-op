@@ -36,6 +36,7 @@ app.get("/health", async (_req, res) => {
     orchestration: { customerRouter: true, deterministicResponseReview: true },
     integrations: {
       gemini: Boolean(config.geminiApiKey),
+      webResearch: secretary.subagents.investigadorWeb.isConfigured(),
       whatsapp: whatsapp.isConfigured(),
       blackopsPublicApi: config.blackopsApiEnabled && Boolean(config.blackopsApiBaseUrl),
       websiteMonitor: websiteMonitor.isConfigured()
