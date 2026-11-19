@@ -37,6 +37,7 @@ app.get("/health", async (_req, res) => {
     integrations: {
       gemini: Boolean(config.geminiApiKey),
       webResearch: secretary.subagents.investigadorWeb.isConfigured(),
+      adminAnalytics: secretary.subagents.analistaAdministrativo.isConfigured(),
       whatsapp: whatsapp.isConfigured(),
       blackopsPublicApi: config.blackopsApiEnabled && Boolean(config.blackopsApiBaseUrl),
       websiteMonitor: websiteMonitor.isConfigured()
