@@ -1,7 +1,7 @@
 # Estado real del proyecto Black Ops Paintball
 
 **Corte:** 19 de noviembre de 2026  
-**Estimación global corregida:** aproximadamente **45%** de alcance funcional.  
+**Estimación global corregida:** aproximadamente **46%** de alcance funcional.  
 **Estado:** prototipo backend en desarrollo; no está listo para producción.
 
 ## Cómo se calcula el avance
@@ -15,7 +15,7 @@ La estimación es orientativa y debe revisarse al cerrar cada bloque de aceptaci
 | Capacidad comprometida | Estado comprobable | Avance estimado |
 |---|---|---:|
 | Backend Node.js y arquitectura modular | Servidor, configuración, módulos y CI; falta endurecimiento y validación productiva | 65% |
-| Atención por WhatsApp | Webhook, cliente Cloud API y lógica básica; falta conectar número/Meta y pruebas reales de extremo a extremo | 45% |
+| Atención por WhatsApp | Webhook y Cloud API; solicitudes estructuradas de disponibilidad consultan candidatos con validación y fallback humano; falta conectar número/Meta y pruebas reales de extremo a extremo | 50% |
 | Gemini y atención inteligente | SDK y generación JSON; sin pruebas con credenciales reales, function calling y orquestación aún limitada | 35% |
 | Secretario y coordinación de subagentes | Orquestador conectado; supervisor de agenda y auditor general ejecutan lógica determinista, pero faltan integraciones privadas | 50% |
 | Memoria del dueño | Guardar, listar, corregir y desactivar; falta validación de seguridad y pruebas productivas | 70% |
@@ -49,7 +49,7 @@ El proyecto tiene una base técnica útil, pero la mayor parte de las funciones 
 - Orquestador central conectado al flujo de atención y revisor determinista de respuestas con pruebas automatizadas.
 - Investigador web con Gemini Google Search grounding, extracción/deduplicación de fuentes HTTPS y comando del dueño `INVESTIGAR:`.
 - Analista administrativo determinista para snapshots normalizados: reservas por estado, pagos reportados, recaudos confirmados y reembolsos separados; protege sumas COP contra desbordamiento e inventario bajo mínimo; sin fuente privada conectada.
-- Cliente de API pública endurecido con validación de URL HTTPS, fechas reales, rango máximo, timeout, errores seguros y pruebas.\n- Planificador conservador de disponibilidad pública con paquetes, jugadores, bloqueos, márgenes de limpieza y parser validado del comando del dueño; no confirma ni bloquea reservas.
+- Cliente de API pública endurecido con validación de URL HTTPS, fechas reales, rango máximo, timeout, errores seguros y pruebas.\n- Planificador conservador de disponibilidad pública con paquetes, jugadores, bloqueos, márgenes de limpieza y parser validado del comando del dueño; no confirma ni bloquea reservas.\n- Atención al cliente reconoce consultas estructuradas de horarios, valida fecha y cantidad de jugadores, muestra candidatos y deriva al equipo si faltan datos o falla la API; no confirma reservas.
 - Auditor general determinista, con resumen de eventos, hallazgos operativos y protección contra exposición de mensajes/teléfonos; comando `AUDITORIA`.
 - Planificador de marketing fundamentado con investigación previa, calendario de hasta siete piezas y borradores de captions/CTA/briefs visuales; comando `MARKETING:` sin publicación automática.
 - Dockerfile, Compose, CI y documentación inicial.
