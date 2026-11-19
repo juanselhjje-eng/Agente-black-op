@@ -232,7 +232,7 @@ export function createSecretary({ config, store, whatsapp }) {
           const summary = report.summary;
           const findings = summary.findings.map(item => "• [" + item.severity.toUpperCase() + "] " + item.message + " (" + item.count + ")");
           const types = Object.entries(summary.eventTypes).slice(0, 8).map(([type,count]) => "• " + type + ": " + count);
-          await whatsapp.sendText(message.from, ["AUDITORÍA OPERATIVA — ÚLTIMAS 24 HORAS", "Eventos analizados: " + summary.eventCount, "Fallos registrados: " + summary.counts.failures, "Escalamientos urgentes: " + summary.counts.urgent, "Consultas vencidas: " + summary.counts.ownerTimeouts, findings.length ? "HALLAZGOS:\n" + findings.join("\n") : "Sin hallazgos de alerta en los eventos consultados.", types.length ? "ACTIVIDAD PRINCIPAL:\n" + types.join("\n") : "", summary.privacy].filter(Boolean).join("\n\n"));
+          await whatsapp.sendText(message.from, ["AUDITORÍA OPERATIVA — ÚLTIMAS 24 HORAS", "Eventos analizados: " + summary.eventCount, "Fallos registrados: " + summary.counts.failures, "Escalamientos urgentes: " + summary.counts.urgent, "Consultas vencidas: " + summary.counts.ownerTimeouts, "Reportes de pago pendientes de verificación: " + (summary.counts.paymentReportsPending || 0), findings.length ? "HALLAZGOS:\n" + findings.join("\n") : "Sin hallazgos de alerta en los eventos consultados.", types.length ? "ACTIVIDAD PRINCIPAL:\n" + types.join("\n") : "", summary.privacy].filter(Boolean).join("\n\n"));
         }
         await store.audit({ type: "owner_audit_report_requested", eventCount: report.summary?.eventCount || 0, findings: report.summary?.findings?.length || 0 });
       } catch (error) {
