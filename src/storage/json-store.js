@@ -72,7 +72,7 @@ export function createStore(directory) {
     },
     updateReservationRequest: (id, status, details = {}) => mutate(state => {
       const item = (state.reservationRequests || []).find(entry => entry.id === id && ["pending_owner_review", "owner_contacted"].includes(entry.status));
-      if (!item || !["owner_contacted", "closed"].includes(status)) return null;
+      if (!item || !["owner_contacted", "rejected", "cancelled_by_customer", "closed"].includes(status)) return null;
       Object.assign(item, details, { status, updatedAt: new Date().toISOString() }); return item;
     }),
     createWebChangeRequest: input => mutate(state => {
