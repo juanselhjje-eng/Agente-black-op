@@ -1,4 +1,5 @@
 import { createSubagents } from "./subagents.js";
+import { buildOwnerReport } from "../reports/owner-report.js";
 function extractMessages(payload) {
   const messages = [];
   for (const entry of payload?.entry || []) for (const change of entry?.changes || []) for (const message of change?.value?.messages || []) {
@@ -41,6 +42,13 @@ export function createSecretary({ config, store, whatsapp }) {
       await whatsapp.sendText(closed.customer, reply.answer);
       await whatsapp.sendText(message.from, "Respuesta enviada al cliente.");
       await store.audit({ type: "owner_escalation_answered", escalationId: reply.escalationId });
+      return;
+    }
+    if (/^RESUMEN (HOY|SEMANA)$/i.test(text)) {
+      const period = /SEMANA$/i.test(text) ? "weekly" : "daily";
+      const report = await buildOwnerReport(store, { period, timeZone: config.reportTimeZone });
+      await whatsapp.sendText(message.from, report.text);
+      await store.audit({ type: "owner_operational_report_sent", period, start: report.start.toISOString(), end: report.end.toISOString() });
       return;
     }
     if (/^MEMORIAS$/i.test(text)) {
