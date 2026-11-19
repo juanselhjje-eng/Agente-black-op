@@ -1,15 +1,15 @@
-const URGENT = /\\b(lesi[oó]n|herid[ao]|sangr|fractur|accidente|emergencia|urgente|amenaz|intoxic|desmayo|queja grave)\\b/i;
-const PAYMENT_OR_BOOKING = /\\b(pag[oa] (?:confirmad[oa]|verificad[oa])|reserva (?:confirmada|agendada)|cupo (?:confirmado|garantizado)|transacci[oó]n aprobada)\\b/i;
+const URGENT = /\b(lesi[oó]n|lesion|herid[ao]|sangr|fractur|accidente|emergencia|urgente|amenaz|intoxic|desmayo|queja grave)\b/i;
+const PAYMENT_OR_BOOKING = /\b(pag[oa] (?:confirmad[oa]|verificad[oa])|reserva (?:confirmada|agendada)|cupo (?:confirmado|garantizado)|transacci[oó]n aprobada)\b/i;
 const CONTACT = "Para atención directa, escríbenos al 311 334 8774.";
 
 export function classifyCustomerMessage(message) {
   const text = String(message || "").trim();
   if (URGENT.test(text)) return { intent: "urgent_human", urgent: true, needsOwner: true };
-  if (/\\b(disponibilidad|hay cupo|reservar|reserva|agendar|fecha|horario)\\b/i.test(text)) return { intent: "booking_guidance", urgent: false, needsOwner: false };
-  if (/\\b(precio|precios|paquete|paquetes|valor|cu[aá]nto cuesta)\\b/i.test(text)) return { intent: "pricing", urgent: false, needsOwner: false };
-  if (/\\b(pagu[eé]|pago|nequi|comprobante|transferencia|reembolso|devoluci[oó]n)\\b/i.test(text)) return { intent: "payment", urgent: false, needsOwner: true };
-  if (/\\b(inventario|stock|existencias|ventas del d[ií]a|ingresos|facturaci[oó]n)\\b/i.test(text)) return { intent: "private_business_data", urgent: false, needsOwner: true };
-  if (/\\b(cambio|cancelar|cancelaci[oó]n|modificar)\\b/i.test(text) && /\\b(reserva|fecha|hora|jugadores)\\b/i.test(text)) return { intent: "reservation_change", urgent: false, needsOwner: true };
+  if (/\b(disponibilidad|hay cupo|reservar|reserva|agendar|fecha|horario)\b/i.test(text)) return { intent: "booking_guidance", urgent: false, needsOwner: false };
+  if (/\b(precio|precios|paquete|paquetes|valor|cu[aá]nto cuesta)\b/i.test(text)) return { intent: "pricing", urgent: false, needsOwner: false };
+  if (/\b(pagu[eé]|pago|nequi|comprobante|transferencia|reembolso|devoluci[oó]n)\b/i.test(text)) return { intent: "payment", urgent: false, needsOwner: true };
+  if (/\b(inventario|stock|existencias|ventas del d[ií]a|ingresos|facturaci[oó]n)\b/i.test(text)) return { intent: "private_business_data", urgent: false, needsOwner: true };
+  if (/\b(cambio|cancelar|cancelaci[oó]n|modificar)\b/i.test(text) && /\b(reserva|fecha|hora|jugadores)\b/i.test(text)) return { intent: "reservation_change", urgent: false, needsOwner: true };
   return { intent: "general", urgent: false, needsOwner: false };
 }
 
