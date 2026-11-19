@@ -163,10 +163,23 @@ export function createSecretary({ config, store, whatsapp }) {
       }
       return;
     }
+    const rejection = parseOwnerReservationRejection(text);
+    if (rejection) {
+      const requests = await store.listReservationRequests({ activeOnly: false });
+      const matches = requests.filter(item => item.id.startsWith(rejection.idPrefix));
+      const item = matches.length === 1 ? matches[0] : null;
+      const updated = item ? await store.updateReservationRequest(item.id, "rejected", { resolutionNote: rejection.reason, resolvedBy: message.from }) : null;
+      if (updated) {
+        await whatsapp.sendText(updated.customer, reservationRequestStatusMessage(updated));
+        await store.audit({ type: "reservation_request_rejected", requestId: updated.id });
+      }
+      await whatsapp.sendText(message.from, updated ? "Solicitud " + updated.id.slice(0,8) + " rechazada y notificada al cliente. No se modificó ninguna reserva confirmada." : "No encontré una solicitud abierta única con ese código.");
+      return;
+    }
     if (/^RESERVAS PENDIENTES$/i.test(text)) {
       const items = await store.listReservationRequests();
       const lines = items.slice(0,15).map(item => item.id.slice(0,8) + " — " + item.date + " " + item.time + " — " + item.players + " jugadores — " + item.packageType + " — " + item.status);
-      await whatsapp.sendText(message.from, lines.length ? "SOLICITUDES (no son reservas confirmadas):\n" + lines.join("\n") + "\nUsa CONTACTADO RESERVA ID para marcar el contacto." : "No hay solicitudes de reserva pendientes.");
+      await whatsapp.sendText(message.from, lines.length ? "SOLICITUDES (no son reservas confirmadas):\n" + lines.join("\n") + "\nUsa CONTACTADO RESERVA ID, RECHAZAR SOLICITUD ID: motivo o el cliente puede cancelar con CANCELAR SOLICITUD ID." : "No hay solicitudes de reserva pendientes.");
       return;
     }
     const contacted = text.match(/^CONTACTADO RESERVA\s+([0-9a-f-]{8,36})$/i);
