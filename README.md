@@ -1,39 +1,35 @@
 # Agente Black Ops
 
-Proyecto para construir un **Secretario virtual de Black Ops Paintball**: atiende clientes por WhatsApp, coordina subagentes especializados y ayuda al dueño con alertas, reportes, supervisión e ideas comerciales. Usa Gemini como modelo de IA y Node.js como núcleo de integración.
+Proyecto para construir un **Secretario virtual de Black Ops Paintball**: atiende clientes por WhatsApp, coordina subagentes y ayuda al dueño con alertas, reportes, supervisión e ideas comerciales. Usa Gemini y Node.js.
 
 ## Documentación
 - [Definición del producto y requisitos](docs/DEFINICION_PRODUCTO_Y_REQUISITOS.md)
 - [Operación y despliegue 24/7](docs/OPERACION_Y_DESPLIEGUE.md)
-- [Integraciones y contratos](docs/INTEGRACIONES.md)
+- [Integraciones](docs/INTEGRACIONES.md)
 - [Memoria y aprendizaje del dueño](docs/MEMORIA_DEL_DUENO.md)
 
-## Arquitectura
-Un único agente principal, el **Secretario**, coordina seis subagentes: Atención WhatsApp, Supervisor web y agenda, Investigador web, Analista administrativo/comercial, Revisor y Auditor general. Los especialistas entregan sus resultados al Secretario; este conserva el control de la respuesta final.
+## Estado
+El repositorio incluye backend inicial, webhook WhatsApp, conexión Gemini, consulta de API pública, escalaciones y memoria local del dueño. La memoria admite instrucciones naturales y correcciones versionadas.
 
-## Estado del desarrollo
-El repositorio contiene el backend inicial, webhook de WhatsApp, cliente de envío, conexión Gemini, adaptador de API pública, worker de escalaciones y memoria persistente local para las guías del dueño.
+También existe un registro de solicitudes de cambios web: el dueño puede describir qué quiere cambiar y el Secretario lo registra para revisión y aprobación. **Todavía no modifica la web**: falta conectar el repositorio/CMS real, permisos y staging. La aprobación registrada no publica automáticamente.
 
-La memoria del dueño ya tiene flujo de aprendizaje: el dueño autenticado puede enseñar reglas en lenguaje natural; el Secretario las guarda, confirma lo aprendido y las incorpora al contexto de futuras respuestas. También existen comandos para guardar, consultar y desactivar guías.
+No está conectado a servicios reales ni desplegado. JSON es almacenamiento de desarrollo de una instancia; producción requiere base de datos, copias de seguridad y controles de acceso.
 
-**No está desplegado ni conectado a servicios reales.** Aún no se ha contratado servidor ni configurado dominio HTTPS, cuenta Meta/WhatsApp o credenciales de producción. La persistencia JSON es para desarrollo de una sola instancia; antes de producción se migrará a una base de datos robusta.
-
-## Reglas fundamentales
-1. Todo el desarrollo y la documentación se mantienen directamente en este repositorio de GitHub.
-2. No subir secretos, tokens, contraseñas ni datos privados.
+## Reglas
+1. Todo el código y la documentación se mantienen en este repositorio GitHub.
+2. Nunca subir secretos.
 3. No inventar precios, disponibilidad, pagos, reservas ni políticas.
-4. Las guías del dueño se recuerdan y aplican en futuras conversaciones, siempre subordinadas a seguridad, privacidad y hechos verificados.
-5. Los datos de ventas, pagos, inventario y reservas privadas requieren API autenticada.
-6. No activar atención real hasta completar pruebas, configuración y autorización del negocio.
+4. Las guías del dueño se recuerdan, con historial de correcciones.
+5. No ejecutar cambios de producción sin vista previa, pruebas y aprobación explícita.
+6. Los datos privados y operaciones requieren APIs autenticadas.
 
-## Desarrollo local
+## Desarrollo
 Requiere Node.js 20 o superior:
 ```bash
 npm install
 npm test
 npm run dev
 ```
-Luego consultar `http://127.0.0.1:3000/health`.
+Consulta `http://127.0.0.1:3000/health`.
 
-## Repositorio
-[juanselhjje-eng/Agente-black-op](https://github.com/juanselhjje-eng/Agente-black-op)
+Repositorio: https://github.com/juanselhjje-eng/Agente-black-op
