@@ -1,11 +1,18 @@
 import { randomUUID } from "node:crypto";
+import { readFileSync } from "node:fs";
 import pg from "pg";
 
 const { Pool } = pg;
 
 export function createPostgresStore({ connectionString, pool, max = 10 }) {
   if (!pool && !connectionString) throw new TypeError("DATABASE_URL es obligatorio para PostgreSQL.");
-  const db = pool || new Pool({ connectionString, max, ssl: process.env.PGSSL === "true" ? { rejectUnauthorized: true } : undefined });
+  const ssl = process.env.PGSSL === "true"
+    ? {
+        rejectUnauthorized: true,
+        ca: readFileSync(process.env.PGSSL_CA_PATH || "./supabase-ca.crt", "utf8")
+      }
+    : undefined;
+  const db = pool || new Pool({ connectionString, max, ssl });
   let initPromise;
   const schema = `
     CREATE TABLE IF NOT EXISTS blackops_messages (
