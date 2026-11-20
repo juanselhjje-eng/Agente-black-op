@@ -9,14 +9,20 @@ test("el almacenamiento JSON agrega métricas operativas dentro del periodo", as
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), "blackops-report-"));
   try {
     const store = createStore(directory);
-    const start = new Date("2026-11-19T05:00:00.000Z");
-    const end = new Date("2026-11-20T05:00:00.000Z");
+    // El almacenamiento asigna las marcas de tiempo al momento de escribir.
+    // Construimos una ventana alrededor del instante de ejecución para que
+    // la prueba no dependa de una fecha fija ni falle al cambiar el día.
+    const now = new Date();
+    const start = new Date(now.getTime() - 60_000);
+    const end = new Date(now.getTime() + 60_000);
+
     await store.addMessage({ id: "in-1", from: "573001", text: "Hola" });
     await store.audit({ type: "outgoing_message", messageId: "in-1" });
     await store.audit({ type: "owner_escalation_answered", escalationId: "e-1" });
-    await store.saveWebsiteCheck({ ok: true, checkedAt: "2026-11-19T15:00:00.000Z" });
-    await store.saveWebsiteCheck({ ok: false, checkedAt: "2026-11-19T16:00:00.000Z" });
+    await store.saveWebsiteCheck({ ok: true, checkedAt: now.toISOString() });
+    await store.saveWebsiteCheck({ ok: false, checkedAt: now.toISOString() });
     await store.createWebChangeRequest({ summary: "Actualizar portada" });
+
     const metrics = await store.getOperationalMetrics(start, end);
     assert.equal(metrics.inboundMessages, 1);
     assert.equal(metrics.outboundMessages, 1);
