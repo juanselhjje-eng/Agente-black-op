@@ -99,6 +99,40 @@ function requireAdminApi(req, res, next) {
   if (!config.databaseUrl || !store.ingestBusinessReservation) return res.status(503).json({ error: "postgresql_required" });
   return next();
 }
+app.get("/admin/v1/snapshot", requireAdminApi, async (req, res) => {
+  const { start, end } = req.query;
+  if ((start && Number.isNaN(Date.parse(start))) || (end && Number.isNaN(Date.parse(end))) ||
+      (start && end && Date.parse(start) >= Date.parse(end))) {
+    return res.status(400).json({ error: "invalid_date_range" });
+  }
+  try {
+    const snapshot = await store.getAdminSnapshot({
+      start: start ? new Date(start) : undefined,
+      end: end ? new Date(end) : undefined
+    });
+    return res.json({ ok: true, snapshot });
+  } catch (error) {
+    console.error("Error consultando datos administrativos:", error);
+    return res.status(500).json({ error: "admin_snapshot_failed" });
+  }
+});
+app.get("/admin/v1/summary", requireAdminApi, async (req, res) => {
+  const { start, end } = req.query;
+  if ((start && Number.isNaN(Date.parse(start))) || (end && Number.isNaN(Date.parse(end))) ||
+      (start && end && Date.parse(start) >= Date.parse(end))) {
+    return res.status(400).json({ error: "invalid_date_range" });
+  }
+  try {
+    const result = await secretary.subagents.analistaAdministrativo.getSummary({
+      start: start ? new Date(start) : undefined,
+      end: end ? new Date(end) : undefined
+    });
+    return res.json({ ok: true, ...result });
+  } catch (error) {
+    console.error("Error generando resumen administrativo:", error);
+    return res.status(500).json({ error: "admin_summary_failed" });
+  }
+});
 app.post("/admin/v1/reservations", requireAdminApi, async (req, res) => {
   const x = req.body || {};
   if ((x.id !== undefined && !UUID_PATTERN.test(x.id)) ||
