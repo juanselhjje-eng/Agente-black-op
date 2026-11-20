@@ -15,11 +15,23 @@ test("rechaza comandos incompletos o con ID inválido", () => {
   assert.equal(parseOwnerReply("hola"), null);
 });
 
-
 import { createSecretary } from "../src/agents/secretary.js";
 
 function webhookMessage(text, id = "wamid.payment-test") {
-  return { entry: [{ changes: [{ value: { messages: [{ id, from: "573001112233", type: "text", text: { body: text } }] } }] }] }] };
+  return {
+    entry: [{
+      changes: [{
+        value: {
+          messages: [{
+            id,
+            from: "573001112233",
+            type: "text",
+            text: { body: text }
+          }]
+        }
+      }]
+    }]
+  };
 }
 
 function secretaryHarness({ ownerAlertsEnabled = false } = {}) {

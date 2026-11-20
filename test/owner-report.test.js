@@ -16,12 +16,16 @@ test("genera resumen sin inventar datos comerciales", async () => {
   const store = { getOperationalMetrics: async () => ({
     inboundMessages: 12, outboundMessages: 10, escalationsOpened: 3, escalationsAnswered: 1,
     escalationsTimedOut: 1, escalationsPending: 1, websiteChecks: 20, websiteFailures: 2,
-    webChangesPending: 2, webChangesApprovedPending: 1
+    webChangesPending: 2, webChangesApprovedPending: 1,
+    reservationRequestsCreated: 4, reservationRequestsPending: 3, reservationRequestsClosed: 1
   }) };
   const report = await buildOwnerReport(store, { now: new Date("2026-11-19T15:00:00Z") });
   assert.match(report.text, /Disponibilidad observada: 90%/);
   assert.match(report.text, /Ventas, pagos, inventario y reservas privadas: sin reporte/);
   assert.match(report.text, /Mensajes recibidos: 12/);
+  assert.match(report.text, /Solicitudes recibidas en el periodo: 4/);
+  assert.match(report.text, /Pendientes de gestión actualmente: 3/);
+  assert.match(report.text, /Cerradas o rechazadas en el periodo: 1/);
 });
 test("rechaza periodos no soportados", () => {
   assert.throws(() => getReportRange("monthly"), /daily o weekly/);

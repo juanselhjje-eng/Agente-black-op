@@ -1,11 +1,28 @@
 import { randomUUID } from "node:crypto";
+import { readFileSync } from "node:fs";
 import pg from "pg";
 
 const { Pool } = pg;
 
 export function createPostgresStore({ connectionString, pool, max = 10 }) {
   if (!pool && !connectionString) throw new TypeError("DATABASE_URL es obligatorio para PostgreSQL.");
-  const db = pool || new Pool({ connectionString, max, ssl: process.env.PGSSL === "true" ? { rejectUnauthorized: true } : undefined });
+  const ssl = process.env.PGSSL === "true"
+    ? {
+        rejectUnauthorized: true,
+        ca: readFileSync(process.env.PGSSL_CA_PATH || "./supabase-ca.crt", "utf8")
+      }
+    : undefined;
+  // node-postgres lets SSL query parameters in the URL override the explicit
+  // TLS options (including the supplied CA). Remove sslmode when using our
+  // verified CA configuration so certificate validation uses this SSL object.
+  const normalizedConnectionString = process.env.PGSSL === "true"
+    ? (() => {
+        const url = new URL(connectionString);
+        url.searchParams.delete("sslmode");
+        return url.toString();
+      })()
+    : connectionString;
+  const db = pool || new Pool({ connectionString: normalizedConnectionString, max, ssl });
   let initPromise;
   const schema = `
     CREATE TABLE IF NOT EXISTS blackops_messages (
@@ -169,6 +186,60 @@ export function createPostgresStore({ connectionString, pool, max = 10 }) {
       const r = await query("SELECT data FROM blackops_website_checks ORDER BY checked_at DESC,id DESC LIMIT $1", [Math.max(1,Math.min(100,limit))]);
       return r.rows.map(row => row.data).reverse();
     },
+    async ingestBusinessReservation(item) {
+      const r = await query(`INSERT INTO public.blackops_business_reservations
+        (id,reservation_code,status,reservation_date,starts_at,players,package_type,total_cop)
+        VALUES(COALESCE($1::uuid,gen_random_uuid()),$2,$3,$4,$5,$6,$7,$8)
+        ON CONFLICT (id) DO UPDATE SET reservation_code=EXCLUDED.reservation_code,status=EXCLUDED.status,
+          reservation_date=EXCLUDED.reservation_date,starts_at=EXCLUDED.starts_at,players=EXCLUDED.players,
+          package_type=EXCLUDED.package_type,total_cop=EXCLUDED.total_cop,updated_at=NOW()
+        RETURNING id,reservation_code,status`,
+        [item.id || null,item.reservationCode || null,item.status,item.reservationDate,item.startsAt || null,item.players,item.packageType,item.totalCop]);
+      return r.rows[0];
+    },
+    async ingestBusinessPayment(item) {
+      const r = await query(`INSERT INTO public.blackops_business_payments
+        (id,reservation_id,status,amount_cop,verified_at,refunded_at)
+        VALUES(COALESCE($1::uuid,gen_random_uuid()),$2,$3,$4,$5,$6)
+        ON CONFLICT (id) DO UPDATE SET reservation_id=EXCLUDED.reservation_id,status=EXCLUDED.status,
+          amount_cop=EXCLUDED.amount_cop,verified_at=EXCLUDED.verified_at,refunded_at=EXCLUDED.refunded_at,updated_at=NOW()
+        RETURNING id,status,amount_cop`,
+        [item.id || null,item.reservationId || null,item.status,item.amountCop,item.verifiedAt || null,item.refundedAt || null]);
+      return r.rows[0];
+    },
+    async ingestBusinessInventory(item) {
+      const r = await query(`INSERT INTO public.blackops_business_inventory(sku,name,quantity,minimum)
+        VALUES($1,$2,$3,$4) ON CONFLICT(sku) DO UPDATE SET name=EXCLUDED.name,
+        quantity=EXCLUDED.quantity,minimum=EXCLUDED.minimum,updated_at=NOW()
+        RETURNING sku,name,quantity,minimum`, [item.sku,item.name,item.quantity,item.minimum]);
+      return r.rows[0];
+    },
+    async getAdminSnapshot({ start, end } = {}) {
+      const [reservations, payments, inventory] = await Promise.all([
+        query(`SELECT status, total_cop, created_at FROM public.blackops_business_reservations
+          WHERE ($1::timestamptz IS NULL OR created_at >= $1)
+            AND ($2::timestamptz IS NULL OR created_at < $2)
+          ORDER BY created_at DESC LIMIT 10000`, [start || null, end || null]),
+        query(`SELECT status, amount_cop, verified_at, refunded_at, created_at
+          FROM public.blackops_business_payments
+          WHERE ($1::timestamptz IS NULL OR created_at >= $1)
+            AND ($2::timestamptz IS NULL OR created_at < $2)
+          ORDER BY created_at DESC LIMIT 10000`, [start || null, end || null]),
+        query(`SELECT sku, name, quantity, minimum FROM public.blackops_business_inventory ORDER BY name LIMIT 5000`)
+      ]);
+      return {
+        source: "supabase-postgresql",
+        asOf: new Date().toISOString(),
+        reservations: reservations.rows.map(row => ({ status: row.status, totalCop: Number(row.total_cop), createdAt: row.created_at })),
+        payments: payments.rows.map(row => ({
+          status: row.status, amountCop: Number(row.amount_cop),
+          verifiedAt: row.verified_at, refundedAt: row.refunded_at, createdAt: row.created_at
+        })),
+        inventory: inventory.rows.map(row => ({
+          sku: row.sku, name: row.name, quantity: row.quantity, minimum: row.minimum
+        }))
+      };
+    },
     async getOperationalMetrics(start, end) {
       const r = await query(`
         SELECT
@@ -181,7 +252,10 @@ export function createPostgresStore({ connectionString, pool, max = 10 }) {
           (SELECT COUNT(*)::int FROM blackops_website_checks WHERE checked_at >= $1 AND checked_at < $2) AS website_checks,
           (SELECT COUNT(*)::int FROM blackops_website_checks WHERE checked_at >= $1 AND checked_at < $2 AND ok=FALSE) AS website_failures,
           (SELECT COUNT(*)::int FROM blackops_web_changes WHERE status='pending_review') AS web_changes_pending,
-          (SELECT COUNT(*)::int FROM blackops_web_changes WHERE status='approved_pending_integration') AS web_changes_approved_pending
+          (SELECT COUNT(*)::int FROM blackops_web_changes WHERE status='approved_pending_integration') AS web_changes_approved_pending,
+          (SELECT COUNT(*)::int FROM blackops_reservation_requests WHERE created_at >= $1 AND created_at < $2) AS reservation_requests_created,
+          (SELECT COUNT(*)::int FROM blackops_reservation_requests WHERE status IN ('pending_owner_review','owner_contacted')) AS reservation_requests_pending,
+          (SELECT COUNT(*)::int FROM blackops_reservation_requests WHERE updated_at >= $1 AND updated_at < $2 AND status IN ('rejected','cancelled_by_customer','closed')) AS reservation_requests_closed
       `, [start, end]);
       const row = r.rows[0];
       return {
@@ -189,7 +263,10 @@ export function createPostgresStore({ connectionString, pool, max = 10 }) {
         escalationsOpened: row.escalations_opened, escalationsAnswered: row.escalations_answered,
         escalationsTimedOut: row.escalations_timed_out, escalationsPending: row.escalations_pending,
         websiteChecks: row.website_checks, websiteFailures: row.website_failures,
-        webChangesPending: row.web_changes_pending, webChangesApprovedPending: row.web_changes_approved_pending
+        webChangesPending: row.web_changes_pending, webChangesApprovedPending: row.web_changes_approved_pending,
+        reservationRequestsCreated: row.reservation_requests_created,
+        reservationRequestsPending: row.reservation_requests_pending,
+        reservationRequestsClosed: row.reservation_requests_closed
       };
     },
     async audit(event) { await query("INSERT INTO blackops_audit(event) VALUES($1)", [event]); },

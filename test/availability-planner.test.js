@@ -36,3 +36,37 @@ test("respeta duración elite y horario de cierre", () => {
   assert.equal(result.slots.at(-1).time,"21:00");
   assert.equal(result.slots.at(-1).endsAt,"23:00");
 });
+
+test("acepta mapas vacíos de busy y blocked devueltos por la API real", () => {
+  const result = planPublicAvailability({
+    from: "2026-11-20",
+    publicAvailability: { busy: {}, disabled: [], blocked: {} }
+  });
+  assert.equal(result.status, "verified_against_public_blocks");
+  assert.equal(result.slots[0].time, "08:00");
+  assert.ok(result.slots.length > 0);
+});
+test("no interpreta mapas no vacíos de disponibilidad cuyo formato no conoce", () => {
+  const result = planPublicAvailability({
+    from: "2026-11-20",
+    publicAvailability: { busy: { "2026-11-20": ["09:00"] }, disabled: [], blocked: {} }
+  });
+  assert.equal(result.status, "unverified");
+  assert.equal(result.slots.length, 0);
+});
+
+test("omite horarios que ya pasaron hoy según el reloj de la API", () => {
+  const result = planPublicAvailability({
+    from: "2026-11-20",
+    publicAvailability: {
+      today: "2026-11-20",
+      nowMinute: 759,
+      busy: {},
+      disabled: [],
+      blocked: {}
+    }
+  });
+  assert.equal(result.status, "verified_against_public_blocks");
+  assert.equal(result.slots[0].time, "13:00");
+  assert.ok(result.slots.every(slot => slot.time > "12:39"));
+});

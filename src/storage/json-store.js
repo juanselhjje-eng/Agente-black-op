@@ -107,6 +107,7 @@ export function createStore(directory) {
       const escalations = state.escalations.filter(item => inRange(item.createdAt));
       const checks = state.websiteChecks.filter(item => inRange(item.checkedAt));
       const changes = state.webChangeRequests;
+      const reservationRequests = state.reservationRequests || [];
       return {
         inboundMessages: state.messages.filter(item => inRange(item.storedAt)).length,
         outboundMessages: audits.filter(item => item.type === "outgoing_message").length,
@@ -117,7 +118,10 @@ export function createStore(directory) {
         websiteChecks: checks.length,
         websiteFailures: checks.filter(item => !item.ok).length,
         webChangesPending: changes.filter(item => item.status === "pending_review").length,
-        webChangesApprovedPending: changes.filter(item => item.status === "approved_pending_integration").length
+        webChangesApprovedPending: changes.filter(item => item.status === "approved_pending_integration").length,
+        reservationRequestsCreated: reservationRequests.filter(item => inRange(item.createdAt)).length,
+        reservationRequestsPending: reservationRequests.filter(item => ["pending_owner_review", "owner_contacted"].includes(item.status)).length,
+        reservationRequestsClosed: reservationRequests.filter(item => inRange(item.updatedAt) && ["rejected", "cancelled_by_customer", "closed"].includes(item.status)).length
       };
     },
     audit: event => mutate(state => {

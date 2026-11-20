@@ -22,10 +22,18 @@ function dateOf(value) {
 function readIntervals(payload) {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) return { known: false, intervals: [] };
   const keys = ["busy","disabled","blocked"];
-  if (!keys.some(key => Array.isArray(payload[key]))) return { known: false, intervals: [] };
+  if (!keys.every(key => Object.hasOwn(payload, key))) return { known: false, intervals: [] };
   const intervals = [];
   for (const key of keys) {
-    const list = payload[key] || [];
+    const value = payload[key];
+    // The live API currently returns empty maps for busy/blocked and an array for disabled.
+    // Only an empty map is safe to interpret as "no entries"; unknown non-empty maps stay unverified.
+    const list = Array.isArray(value) ? value : (
+      value && typeof value === "object" && !Array.isArray(value) && Object.keys(value).length === 0
+        ? []
+        : null
+    );
+    if (!list) return { known: false, intervals: [] };
     for (const item of list) {
       if (!item || typeof item !== "object") return { known: false, intervals: [] };
       const startKey = START_KEYS.find(name => item[name] !== undefined);
@@ -62,9 +70,17 @@ export function planPublicAvailability({ from, to = from, packageType = "standar
   if (!parsed.known) return { status: "unverified", message: "La API no devolvió el formato de bloqueos esperado. No se puede afirmar que haya horarios libres.", slots: [], package: packageType, players, range: { from, to } };
   const busy = parsed.intervals;
   const slots = [];
+  const currentDay = typeof publicAvailability?.today === "string" && DAY.test(publicAvailability.today)
+    ? publicAvailability.today
+    : null;
+  const currentMinute = Number.isInteger(publicAvailability?.nowMinute) && publicAvailability.nowMinute >= 0 && publicAvailability.nowMinute < 1440
+    ? publicAvailability.nowMinute
+    : null;
   for (let day = range.start; day <= range.end; day += 86400000) {
     const date = new Date(day).toISOString().slice(0,10);
     for (let minute = openingHour * 60; minute + selectedPackage.minutes <= closingHour * 60; minute += 30) {
+      // Do not offer start times that have already passed on the API's current local day.
+      if (date === currentDay && currentMinute !== null && minute <= currentMinute) continue;
       const start = day / 60000 + minute;
       const end = start + selectedPackage.minutes;
       const protectedEnd = end + cleanupMinutes;

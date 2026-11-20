@@ -1,3 +1,5 @@
+import { generateContentWithFallback } from "./gemini-client.js";
+
 const FORMATS = new Set(["reel","carrusel","historia","post"]);
 const OBJECTIVES = new Set(["alcance","interaccion","consideracion","conversion","comunidad"]);
 
@@ -48,7 +50,7 @@ export function createMarketingPlanner({ ai, model = "gemini-2.5-flash", researc
       if (!brief) throw new TypeError("Describe el objetivo o tema de la campaña.");
       if (!ai || !researcher?.research) return { status:"unavailable", message:"Se requiere Gemini y el investigador web fundamentado para crear un calendario responsable." };
       const research = await researcher.research("Tendencias, referencias y oportunidades de contenido para Instagram de un campo de paintball y experiencias recreativas. Tema solicitado: " + brief);
-      const response = await ai.models.generateContent({
+      const response = await generateContentWithFallback(ai, {
         model,
         contents: JSON.stringify({ brief, research: { status:research.status, summary:research.summary, sources:research.sources, note:research.note } }),
         config: {
