@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { timingSafeEqual } from "node:crypto";
 import express from "express";
 import { config } from "./config.js";
 import { createSecretary } from "./agents/secretary.js";
@@ -20,6 +21,82 @@ await store.init?.();
 const whatsapp = createWhatsAppClient(config);
 const secretary = createSecretary({ config, store, whatsapp });
 const websiteMonitor = createWebsiteMonitor({ url: config.websiteMonitorUrl });
+
+const ADMIN_RESERVATION_STATUSES = new Set(["pending_payment","payment_reported","scheduled","completed","cancelled","expired","overdue"]);
+const ADMIN_PAYMENT_STATUSES = new Set(["pending","reported","verified","paid","approved","refunded","failed"]);
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const validDate = value => typeof value === "string" && !Number.isNaN(Date.parse(value));
+function adminApiAuthorized(req) {
+  const expected = config.adminApiKey;
+  const supplied = req.get("x-admin-api-key") || "";
+  if (!expected || !supplied) return false;
+  const a = Buffer.from(expected);
+  const b = Buffer.from(supplied);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+function requireAdminApi(req, res, next) {
+  if (!config.adminApiKey) return res.status(503).json({ error: "admin_ingestion_not_configured" });
+  if (!adminApiAuthorized(req)) return res.status(401).json({ error: "unauthorized" });
+  if (!config.databaseUrl || !store.ingestBusinessReservation) return res.status(503).json({ error: "postgresql_required" });
+  return next();
+}
+app.post("/admin/v1/reservations", requireAdminApi, async (req, res) => {
+  const x = req.body || {};
+  if ((x.id !== undefined && !UUID_PATTERN.test(x.id)) ||
+      (x.status && !ADMIN_RESERVATION_STATUSES.has(x.status)) ||
+      !validDate(x.reservationDate) || !Number.isSafeInteger(x.players) || x.players < 1 || x.players > 500 ||
+      typeof x.packageType !== "string" || !x.packageType.trim() || x.packageType.length > 80 ||
+      !Number.isSafeInteger(x.totalCop) || x.totalCop < 0 ||
+      (x.startsAt !== undefined && x.startsAt !== null && !validDate(x.startsAt)) ||
+      (x.reservationCode !== undefined && (typeof x.reservationCode !== "string" || x.reservationCode.length > 80))) {
+    return res.status(400).json({ error: "invalid_reservation_payload" });
+  }
+  try {
+    const saved = await store.ingestBusinessReservation({ ...x, status: x.status || "pending_payment" });
+    return res.status(201).json({ ok: true, reservation: saved });
+  } catch (error) {
+    if (error.code === "23505" || error.code === "23503" || error.code === "23514") return res.status(409).json({ error: "reservation_conflict_or_constraint" });
+    console.error("Error guardando reserva comercial:", error);
+    return res.status(500).json({ error: "admin_ingestion_failed" });
+  }
+});
+app.post("/admin/v1/payments", requireAdminApi, async (req, res) => {
+  const x = req.body || {};
+  const status = x.status || "reported";
+  if ((x.id !== undefined && !UUID_PATTERN.test(x.id)) ||
+      (x.reservationId !== undefined && x.reservationId !== null && !UUID_PATTERN.test(x.reservationId)) ||
+      !ADMIN_PAYMENT_STATUSES.has(status) || !Number.isSafeInteger(x.amountCop) || x.amountCop < 0 ||
+      (["verified","paid","approved"].includes(status) && !validDate(x.verifiedAt)) ||
+      (status === "refunded" && !validDate(x.refundedAt)) ||
+      (x.verifiedAt !== undefined && x.verifiedAt !== null && !validDate(x.verifiedAt)) ||
+      (x.refundedAt !== undefined && x.refundedAt !== null && !validDate(x.refundedAt))) {
+    return res.status(400).json({ error: "invalid_payment_payload" });
+  }
+  try {
+    const saved = await store.ingestBusinessPayment({ ...x, status });
+    return res.status(201).json({ ok: true, payment: saved });
+  } catch (error) {
+    if (error.code === "23503" || error.code === "23514") return res.status(409).json({ error: "payment_conflict_or_constraint" });
+    console.error("Error guardando pago comercial:", error);
+    return res.status(500).json({ error: "admin_ingestion_failed" });
+  }
+});
+app.post("/admin/v1/inventory", requireAdminApi, async (req, res) => {
+  const x = req.body || {};
+  if (typeof x.sku !== "string" || !x.sku.trim() || x.sku.length > 80 ||
+      typeof x.name !== "string" || !x.name.trim() || x.name.length > 120 ||
+      !Number.isSafeInteger(x.quantity) || x.quantity < 0 ||
+      !Number.isSafeInteger(x.minimum) || x.minimum < 0) {
+    return res.status(400).json({ error: "invalid_inventory_payload" });
+  }
+  try {
+    const saved = await store.ingestBusinessInventory(x);
+    return res.status(200).json({ ok: true, inventory: saved });
+  } catch (error) {
+    console.error("Error actualizando inventario comercial:", error);
+    return res.status(500).json({ error: "admin_ingestion_failed" });
+  }
+});
 
 app.get("/health", async (_req, res) => {
   let database = "json-local";
