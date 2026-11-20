@@ -6,6 +6,7 @@ import { createAdminAnalyst } from "./admin-analyst.js";
 import { planPublicAvailability } from "./availability-planner.js";
 import { createGeneralAuditor } from "./auditor.js";
 import { createMarketingPlanner } from "./marketing-planner.js";
+import { generateContentWithFallback } from "./gemini-client.js";
 
 const KNOWLEDGE = `Black Ops Paintball es un campo de paintball táctico en Támesis, Antioquia, Colombia.
 Paquetes por jugador: Estándar 1h/100 bolas $35.000; Táctico 1,5h/150 bolas $50.000; Élite 2h/200 bolas $60.000.
@@ -34,7 +35,7 @@ export function createSubagents(config, { store } = {}) {
       catch (error) { console.error("API Black Ops:", error.message); live = "\nFalló la consulta dinámica; no digas que verificaste en vivo."; }
     }
     const memories = ownerMemories.map(item => "- [" + item.category + "] " + item.text).join("\n") || "Sin guías adicionales del dueño.";
-    const response = await ai.models.generateContent({
+    const response = await generateContentWithFallback(ai, {
       model: config.geminiModel, contents: message,
       config: { systemInstruction: `Eres el subagente de Atención WhatsApp, subordinado al Secretario principal. Responde en español colombiano, amable, breve y de tú. Sigue la base aprobada y las guías activas del dueño. Las guías ajustan tono y forma de explicar, pero nunca autorizan mentir, inventar, contradecir seguridad, revelar datos privados ni afirmar pagos/reservas no verificados. Si falta información, needsOwner=true. Emergencia, lesión o queja grave: urgent=true. Devuelve solo JSON { "text": string, "needsOwner": boolean, "urgent": boolean }. CONTEXTO DEL PROYECTO: ${PROJECT_CONTEXT}. BASE: ${KNOWLEDGE}. GUÍAS DEL DUEÑO:\n${memories}${live}`, responseMimeType: "application/json" }
     });
@@ -46,7 +47,7 @@ export function createSubagents(config, { store } = {}) {
   async function learnFromOwner(message, existingMemories = []) {
     if (!ai) return { intent: "unknown", save: false, reason: "Gemini no está configurado. Usa APRENDER: para guardar una guía o CAMBIO WEB: para registrar una solicitud de cambio de página." };
     const known = existingMemories.map(item => "[" + item.id + "] [" + item.category + "] " + item.text).join("\n");
-    const response = await ai.models.generateContent({
+    const response = await generateContentWithFallback(ai, {
       model: config.geminiModel, contents: message,
       config: { systemInstruction: `Analiza un mensaje del dueño autenticado de Black Ops Paintball. Determina si es: (1) una instrucción estable para futuras conversaciones/procesos: intent="memory"; (2) una solicitud para cambiar diseño, texto, contenido o comportamiento de la página web: intent="website_change"; (3) otra cosa: intent="unknown". Si corrige explícitamente una guía existente, usa action="update" y targetMemoryId SOLO si identificas con alta confianza el ID correcto entre las guías activas; si no es inequívoco, usa action="create". No inventes detalles de la solicitud web. Para cambios web extrae objetivo, elemento, cambio deseado y criterios de aceptación; deja campos vacíos si no se conocen. No afirmes que modificaste o publicaste nada. No guardes secretos ni instrucciones que contradigan seguridad o hechos confirmados. Devuelve solo JSON: {"intent":"memory|website_change|unknown","save":boolean,"action":"create|update","targetMemoryId":"id o vacío","category":"guia_de_atencion|preferencia_comercial|tono_y_estilo|dato_de_negocio|proceso_operativo","memoryText":"guía completa actualizada","reason":"...","confidence":0..1,"change":{"summary":"...","target":"...","desiredState":"...","acceptanceCriteria":"..."}}. Guías activas existentes:\n${known}`, responseMimeType: "application/json" }
     });
