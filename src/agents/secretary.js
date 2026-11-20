@@ -295,6 +295,33 @@ export function createSecretary({ config, store, whatsapp, subagents: injectedSu
       await store.audit({ type: "owner_website_status_requested", hasCheck: Boolean(latest), ok: latest?.ok ?? null });
       return;
     }
+    if (/^RESUMEN ADMIN(?: (HOY|SEMANA))?$/i.test(text)) {
+      const period = /SEMANA$/i.test(text) ? "weekly" : "daily";
+      const { getReportRange } = await import("../reports/owner-report.js");
+      const range = getReportRange(period, new Date(), config.reportTimeZone);
+      const result = await subagents.analistaAdministrativo.getSummary(range);
+      if (result.status !== "completed") {
+        await whatsapp.sendText(message.from, result.message || "La analítica administrativa no está disponible.");
+      } else {
+        const s = result.summary;
+        const lines = [
+          "ANALÍTICA ADMINISTRATIVA — " + range.label,
+          "• Reservas registradas: " + s.reservations.total,
+          ...Object.entries(s.reservations.byStatus).filter(([,count]) => count > 0).map(([status,count]) => "  - " + status + ": " + count),
+          "• Pagos verificados: " + s.payments.verifiedCount,
+          "• Recaudo verificado: $" + s.payments.verifiedCollectedCop.toLocaleString("es-CO") + " COP",
+          "• Pagos reportados sin verificar: " + s.payments.reportedUnverifiedCount,
+          "• Reembolsos: " + s.payments.refundedCount + " ($" + s.payments.refundedAmountCop.toLocaleString("es-CO") + " COP)",
+          "• Inventario en mínimo o por debajo: " + s.inventory.atOrBelowMinimum.length,
+          ...s.inventory.atOrBelowMinimum.slice(0,10).map(item => "  - " + item.name + ": " + item.quantity + " (mínimo " + item.minimum + ")"),
+          "Fuente: " + s.source + " | Corte: " + (s.asOf || "no disponible"),
+          "Solo se contabilizan pagos verificados; los datos reflejan los registros cargados."
+        ];
+        await whatsapp.sendText(message.from, lines.join("\\n"));
+      }
+      await store.audit({ type: "owner_admin_analytics_requested", period, status: result.status });
+      return;
+    }
     if (/^RESUMEN (HOY|SEMANA)$/i.test(text)) {
       const period = /SEMANA$/i.test(text) ? "weekly" : "daily";
       const report = await buildOwnerReport(store, { period, timeZone: config.reportTimeZone });
