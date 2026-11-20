@@ -15,7 +15,7 @@ const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
  * Pass one client for backwards compatibility or an array of clients.
  */
 export async function generateContentWithFallback(aiClients, request, {
-  fallbackModel = "gemini-2.5-flash-lite",
+  fallbackModel = "gemini-3.5-flash-lite",
   retryDelayMs = 350
 } = {}) {
   const clients = (Array.isArray(aiClients) ? aiClients : [aiClients]).filter((client) => client?.models?.generateContent);
