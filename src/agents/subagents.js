@@ -19,7 +19,7 @@ export function createSubagents(config, { store } = {}) {
   const apiKeys = [...new Set([config.geminiApiKey, config.geminiApiKeyBackup].filter(Boolean))];
   const ai = apiKeys.length ? apiKeys.map((apiKey) => new GoogleGenAI({ apiKey })) : null;
   const researcher = createWebResearcher({ ai, model: config.geminiModel });
-  const adminAnalyst = createAdminAnalyst();
+  const adminAnalyst = createAdminAnalyst({ provider: store?.getAdminSnapshot ? { getSnapshot: range => store.getAdminSnapshot(range) } : undefined });
   const generalAuditor = createGeneralAuditor({ store });
   const marketingPlanner = createMarketingPlanner({ ai, model: config.geminiModel, researcher });
   const businessApi = createBlackOpsPublicApi(config);
