@@ -70,9 +70,17 @@ export function planPublicAvailability({ from, to = from, packageType = "standar
   if (!parsed.known) return { status: "unverified", message: "La API no devolvió el formato de bloqueos esperado. No se puede afirmar que haya horarios libres.", slots: [], package: packageType, players, range: { from, to } };
   const busy = parsed.intervals;
   const slots = [];
+  const currentDay = typeof publicAvailability?.today === "string" && DAY.test(publicAvailability.today)
+    ? publicAvailability.today
+    : null;
+  const currentMinute = Number.isInteger(publicAvailability?.nowMinute) && publicAvailability.nowMinute >= 0 && publicAvailability.nowMinute < 1440
+    ? publicAvailability.nowMinute
+    : null;
   for (let day = range.start; day <= range.end; day += 86400000) {
     const date = new Date(day).toISOString().slice(0,10);
     for (let minute = openingHour * 60; minute + selectedPackage.minutes <= closingHour * 60; minute += 30) {
+      // Do not offer start times that have already passed on the API's current local day.
+      if (date === currentDay && currentMinute !== null && minute <= currentMinute) continue;
       const start = day / 60000 + minute;
       const end = start + selectedPackage.minutes;
       const protectedEnd = end + cleanupMinutes;
