@@ -22,10 +22,18 @@ function dateOf(value) {
 function readIntervals(payload) {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) return { known: false, intervals: [] };
   const keys = ["busy","disabled","blocked"];
-  if (!keys.some(key => Array.isArray(payload[key]))) return { known: false, intervals: [] };
+  if (!keys.every(key => Object.hasOwn(payload, key))) return { known: false, intervals: [] };
   const intervals = [];
   for (const key of keys) {
-    const list = payload[key] || [];
+    const value = payload[key];
+    // The live API currently returns empty maps for busy/blocked and an array for disabled.
+    // Only an empty map is safe to interpret as "no entries"; unknown non-empty maps stay unverified.
+    const list = Array.isArray(value) ? value : (
+      value && typeof value === "object" && !Array.isArray(value) && Object.keys(value).length === 0
+        ? []
+        : null
+    );
+    if (!list) return { known: false, intervals: [] };
     for (const item of list) {
       if (!item || typeof item !== "object") return { known: false, intervals: [] };
       const startKey = START_KEYS.find(name => item[name] !== undefined);
