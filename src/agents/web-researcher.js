@@ -1,3 +1,5 @@
+import { generateContentWithFallback } from "./gemini-client.js";
+
 const MAX_QUERY = 500;
 const MAX_SOURCES = 8;
 
@@ -28,7 +30,7 @@ export function createWebResearcher({ ai, model = "gemini-2.5-flash" } = {}) {
       const topic = clean(query, MAX_QUERY);
       if (!topic) throw new TypeError("Escribe un tema concreto para investigar.");
       if (!ai) return { status: "unavailable", topic, summary: "", findings: [], sources: [], note: "Configura GEMINI_API_KEY para habilitar investigación con búsqueda fundamentada." };
-      const response = await ai.models.generateContent({
+      const response = await generateContentWithFallback(ai, {
         model,
         contents: topic,
         config: {
