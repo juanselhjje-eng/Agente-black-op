@@ -8,6 +8,7 @@ export const config = Object.freeze({
   host: process.env.HOST || "127.0.0.1",
   dataDir: path.resolve(process.env.DATA_DIR || "./data"),
   databaseUrl: process.env.DATABASE_URL || "",
+  adminApiKey: process.env.ADMIN_API_KEY || "",
   pgPoolMax: Math.max(1, Math.min(30, number(process.env.PG_POOL_MAX, 10))),
   geminiApiKey: process.env.GEMINI_API_KEY || "",
   geminiApiKeyBackup: process.env.GEMINI_API_KEY_BACKUP || "",
