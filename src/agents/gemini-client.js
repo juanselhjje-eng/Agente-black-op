@@ -10,35 +10,43 @@ function statusOf(error) {
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
- * Calls Gemini with the configured model, retries one transient server error,
- * then falls back to a lower-cost model when the primary is unavailable/quota-limited.
+ * Tries configured Gemini projects in order. Each project gets one retry for
+ * transient server errors and a lower-cost model fallback before moving on.
+ * Pass one client for backwards compatibility or an array of clients.
  */
-export async function generateContentWithFallback(ai, request, {
+export async function generateContentWithFallback(aiClients, request, {
   fallbackModel = "gemini-2.5-flash-lite",
   retryDelayMs = 350
 } = {}) {
-  if (!ai?.models?.generateContent) throw new TypeError("Gemini no está configurado.");
+  const clients = (Array.isArray(aiClients) ? aiClients : [aiClients]).filter((client) => client?.models?.generateContent);
+  if (!clients.length) throw new TypeError("Gemini no está configurado.");
   const primaryModel = request?.model || "gemini-2.5-flash";
-  const attempt = (model) => ai.models.generateContent({ ...request, model });
+  let lastError;
 
-  try {
-    return await attempt(primaryModel);
-  } catch (firstError) {
-    const status = statusOf(firstError);
-    if (TRANSIENT_STATUS.has(status)) {
-      await wait(retryDelayMs);
-      try { return await attempt(primaryModel); }
-      catch (retryError) {
-        const retryStatus = statusOf(retryError);
-        if (fallbackModel && fallbackModel !== primaryModel && (TRANSIENT_STATUS.has(retryStatus) || retryStatus === 429 || retryStatus === 404)) {
-          return attempt(fallbackModel);
-        }
-        throw retryError;
+  for (const client of clients) {
+    const attempt = (model) => client.models.generateContent({ ...request, model });
+    try {
+      return await attempt(primaryModel);
+    } catch (firstError) {
+      lastError = firstError;
+      let error = firstError;
+      let status = statusOf(error);
+
+      if (TRANSIENT_STATUS.has(status)) {
+        await wait(retryDelayMs);
+        try { return await attempt(primaryModel); }
+        catch (retryError) { error = retryError; status = statusOf(error); lastError = error; }
       }
+
+      if (fallbackModel && fallbackModel !== primaryModel && (TRANSIENT_STATUS.has(status) || status === 429 || status === 404)) {
+        try { return await attempt(fallbackModel); }
+        catch (fallbackError) { error = fallbackError; status = statusOf(error); lastError = error; }
+      }
+
+      // Quota, unavailable model, or service overload: try the next project.
+      if (status === 429 || status === 404 || TRANSIENT_STATUS.has(status)) continue;
+      throw error;
     }
-    if (fallbackModel && fallbackModel !== primaryModel && (status === 429 || status === 404)) {
-      return attempt(fallbackModel);
-    }
-    throw firstError;
   }
+  throw lastError || new Error("No fue posible completar la solicitud con los proyectos Gemini configurados.");
 }
