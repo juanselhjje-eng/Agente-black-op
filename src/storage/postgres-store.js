@@ -186,6 +186,34 @@ export function createPostgresStore({ connectionString, pool, max = 10 }) {
       const r = await query("SELECT data FROM blackops_website_checks ORDER BY checked_at DESC,id DESC LIMIT $1", [Math.max(1,Math.min(100,limit))]);
       return r.rows.map(row => row.data).reverse();
     },
+    async ingestBusinessReservation(item) {
+      const r = await query(`INSERT INTO public.blackops_business_reservations
+        (id,reservation_code,status,reservation_date,starts_at,players,package_type,total_cop)
+        VALUES(COALESCE($1::uuid,gen_random_uuid()),$2,$3,$4,$5,$6,$7,$8)
+        ON CONFLICT (id) DO UPDATE SET reservation_code=EXCLUDED.reservation_code,status=EXCLUDED.status,
+          reservation_date=EXCLUDED.reservation_date,starts_at=EXCLUDED.starts_at,players=EXCLUDED.players,
+          package_type=EXCLUDED.package_type,total_cop=EXCLUDED.total_cop,updated_at=NOW()
+        RETURNING id,reservation_code,status`,
+        [item.id || null,item.reservationCode || null,item.status,item.reservationDate,item.startsAt || null,item.players,item.packageType,item.totalCop]);
+      return r.rows[0];
+    },
+    async ingestBusinessPayment(item) {
+      const r = await query(`INSERT INTO public.blackops_business_payments
+        (id,reservation_id,status,amount_cop,verified_at,refunded_at)
+        VALUES(COALESCE($1::uuid,gen_random_uuid()),$2,$3,$4,$5,$6)
+        ON CONFLICT (id) DO UPDATE SET reservation_id=EXCLUDED.reservation_id,status=EXCLUDED.status,
+          amount_cop=EXCLUDED.amount_cop,verified_at=EXCLUDED.verified_at,refunded_at=EXCLUDED.refunded_at,updated_at=NOW()
+        RETURNING id,status,amount_cop`,
+        [item.id || null,item.reservationId || null,item.status,item.amountCop,item.verifiedAt || null,item.refundedAt || null]);
+      return r.rows[0];
+    },
+    async ingestBusinessInventory(item) {
+      const r = await query(`INSERT INTO public.blackops_business_inventory(sku,name,quantity,minimum)
+        VALUES($1,$2,$3,$4) ON CONFLICT(sku) DO UPDATE SET name=EXCLUDED.name,
+        quantity=EXCLUDED.quantity,minimum=EXCLUDED.minimum,updated_at=NOW()
+        RETURNING sku,name,quantity,minimum`, [item.sku,item.name,item.quantity,item.minimum]);
+      return r.rows[0];
+    },
     async getAdminSnapshot({ start, end } = {}) {
       const [reservations, payments, inventory] = await Promise.all([
         query(`SELECT status, total_cop, created_at FROM public.blackops_business_reservations
