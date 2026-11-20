@@ -198,7 +198,10 @@ export function createPostgresStore({ connectionString, pool, max = 10 }) {
           (SELECT COUNT(*)::int FROM blackops_website_checks WHERE checked_at >= $1 AND checked_at < $2) AS website_checks,
           (SELECT COUNT(*)::int FROM blackops_website_checks WHERE checked_at >= $1 AND checked_at < $2 AND ok=FALSE) AS website_failures,
           (SELECT COUNT(*)::int FROM blackops_web_changes WHERE status='pending_review') AS web_changes_pending,
-          (SELECT COUNT(*)::int FROM blackops_web_changes WHERE status='approved_pending_integration') AS web_changes_approved_pending
+          (SELECT COUNT(*)::int FROM blackops_web_changes WHERE status='approved_pending_integration') AS web_changes_approved_pending,
+          (SELECT COUNT(*)::int FROM blackops_reservation_requests WHERE created_at >= $1 AND created_at < $2) AS reservation_requests_created,
+          (SELECT COUNT(*)::int FROM blackops_reservation_requests WHERE status IN ('pending_owner_review','owner_contacted')) AS reservation_requests_pending,
+          (SELECT COUNT(*)::int FROM blackops_reservation_requests WHERE updated_at >= $1 AND updated_at < $2 AND status IN ('rejected','cancelled_by_customer','closed')) AS reservation_requests_closed
       `, [start, end]);
       const row = r.rows[0];
       return {
@@ -206,7 +209,10 @@ export function createPostgresStore({ connectionString, pool, max = 10 }) {
         escalationsOpened: row.escalations_opened, escalationsAnswered: row.escalations_answered,
         escalationsTimedOut: row.escalations_timed_out, escalationsPending: row.escalations_pending,
         websiteChecks: row.website_checks, websiteFailures: row.website_failures,
-        webChangesPending: row.web_changes_pending, webChangesApprovedPending: row.web_changes_approved_pending
+        webChangesPending: row.web_changes_pending, webChangesApprovedPending: row.web_changes_approved_pending,
+        reservationRequestsCreated: row.reservation_requests_created,
+        reservationRequestsPending: row.reservation_requests_pending,
+        reservationRequestsClosed: row.reservation_requests_closed
       };
     },
     async audit(event) { await query("INSERT INTO blackops_audit(event) VALUES($1)", [event]); },
