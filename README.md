@@ -7,6 +7,7 @@ Proyecto para construir un **Secretario virtual de Black Ops Paintball**: atiend
 - [Estado real y matriz de avance](docs/ESTADO_REAL_DEL_PROYECTO.md)
 - [Operación y despliegue 24/7](docs/OPERACION_Y_DESPLIEGUE.md)
 - [Integraciones](docs/INTEGRACIONES.md)
+- [Ingreso seguro de datos comerciales](docs/INGESTA_DATOS_COMERCIALES.md)
 - [Memoria y aprendizaje del dueño](docs/MEMORIA_DEL_DUENO.md)
 - [PostgreSQL y Docker](docs/BASE_DE_DATOS_Y_CONTENEDORES.md)
 - [Respaldos y recuperación](docs/RESPALDOS_Y_RECUPERACION.md)
