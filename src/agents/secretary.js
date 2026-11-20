@@ -317,7 +317,7 @@ export function createSecretary({ config, store, whatsapp, subagents: injectedSu
           "Fuente: " + s.source + " | Corte: " + (s.asOf || "no disponible"),
           "Solo se contabilizan pagos verificados; los datos reflejan los registros cargados."
         ];
-        await whatsapp.sendText(message.from, lines.join("\\n"));
+        await whatsapp.sendText(message.from, lines.join("\n"));
       }
       await store.audit({ type: "owner_admin_analytics_requested", period, status: result.status });
       return;
