@@ -22,6 +22,65 @@ const whatsapp = createWhatsAppClient(config);
 const secretary = createSecretary({ config, store, whatsapp });
 const websiteMonitor = createWebsiteMonitor({ url: config.websiteMonitorUrl });
 
+app.get("/health", async (_req, res) => {
+  let database = "json-local";
+  if (config.databaseUrl) {
+    try { await store.init(); database = "postgresql"; }
+    catch { return res.status(503).json({ status: "degraded", database: "unavailable" }); }
+  }
+  res.status(200).json({
+    status: "ok",
+    service: "agente-black-ops",
+    role: "secretario-principal",
+    storage: database,
+    subagents: ["atencion-whatsapp", "supervisor-web-agenda", "investigador-web", "planificador-marketing", "analista-administrativo", "revisor", "auditor-general"],
+    orchestration: { customerRouter: true, deterministicResponseReview: true },
+    integrations: {
+      gemini: Boolean(config.geminiApiKey),
+      webResearch: secretary.subagents.investigadorWeb.isConfigured(),
+      marketingPlanner: secretary.subagents.planificadorMarketing.isConfigured(),
+      auditAgent: secretary.subagents.auditorGeneral.isConfigured(),
+      adminAnalytics: secretary.subagents.analistaAdministrativo.isConfigured(),
+      whatsapp: whatsapp.isConfigured(),
+      blackopsPublicApi: config.blackopsApiEnabled && Boolean(config.blackopsApiBaseUrl),
+      websiteMonitor: websiteMonitor.isConfigured()
+    },
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.get("/health/website", async (_req, res) => {
+  const latest = await store.getLatestWebsiteCheck();
+  res.status(latest?.ok ? 200 : 503).json({ configured: websiteMonitor.isConfigured(), latest });
+});
+
+app.get("/", (_req, res) => res.json({
+  name: "Secretario Black Ops",
+  status: "running",
+  message: "El Secretario principal coordina los subagentes especializados."
+}));
+
+app.get("/webhooks/whatsapp", (req, res) => {
+  const mode = req.query["hub.mode"];
+  const token = req.query["hub.verify_token"];
+  const challenge = req.query["hub.challenge"];
+  if (mode === "subscribe" && token && token === config.whatsappVerifyToken) return res.status(200).send(challenge);
+  return res.sendStatus(403);
+});
+
+app.post("/webhooks/whatsapp", express.raw({ type: "application/json", limit: "2mb" }), async (req, res) => {
+  const rawBody = req.body;
+  if (config.nodeEnv === "production" && !config.whatsappAppSecret) return res.sendStatus(503);
+  if (config.whatsappAppSecret && !verifyWhatsAppSignature(rawBody, req.get("x-hub-signature-256"), config.whatsappAppSecret)) return res.sendStatus(401);
+  let payload;
+  try { payload = JSON.parse(rawBody.toString("utf8")); }
+  catch { return res.sendStatus(400); }
+  res.sendStatus(200);
+  try { await secretary.handleWebhook(payload); }
+  catch (error) { console.error("Error procesando webhook:", error); }
+});
+
+app.use(express.json({ limit: "1mb" }));
 const ADMIN_RESERVATION_STATUSES = new Set(["pending_payment","payment_reported","scheduled","completed","cancelled","expired","overdue"]);
 const ADMIN_PAYMENT_STATUSES = new Set(["pending","reported","verified","paid","approved","refunded","failed"]);
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -98,65 +157,6 @@ app.post("/admin/v1/inventory", requireAdminApi, async (req, res) => {
   }
 });
 
-app.get("/health", async (_req, res) => {
-  let database = "json-local";
-  if (config.databaseUrl) {
-    try { await store.init(); database = "postgresql"; }
-    catch { return res.status(503).json({ status: "degraded", database: "unavailable" }); }
-  }
-  res.status(200).json({
-    status: "ok",
-    service: "agente-black-ops",
-    role: "secretario-principal",
-    storage: database,
-    subagents: ["atencion-whatsapp", "supervisor-web-agenda", "investigador-web", "planificador-marketing", "analista-administrativo", "revisor", "auditor-general"],
-    orchestration: { customerRouter: true, deterministicResponseReview: true },
-    integrations: {
-      gemini: Boolean(config.geminiApiKey),
-      webResearch: secretary.subagents.investigadorWeb.isConfigured(),
-      marketingPlanner: secretary.subagents.planificadorMarketing.isConfigured(),
-      auditAgent: secretary.subagents.auditorGeneral.isConfigured(),
-      adminAnalytics: secretary.subagents.analistaAdministrativo.isConfigured(),
-      whatsapp: whatsapp.isConfigured(),
-      blackopsPublicApi: config.blackopsApiEnabled && Boolean(config.blackopsApiBaseUrl),
-      websiteMonitor: websiteMonitor.isConfigured()
-    },
-    timestamp: new Date().toISOString()
-  });
-});
-
-app.get("/health/website", async (_req, res) => {
-  const latest = await store.getLatestWebsiteCheck();
-  res.status(latest?.ok ? 200 : 503).json({ configured: websiteMonitor.isConfigured(), latest });
-});
-
-app.get("/", (_req, res) => res.json({
-  name: "Secretario Black Ops",
-  status: "running",
-  message: "El Secretario principal coordina los subagentes especializados."
-}));
-
-app.get("/webhooks/whatsapp", (req, res) => {
-  const mode = req.query["hub.mode"];
-  const token = req.query["hub.verify_token"];
-  const challenge = req.query["hub.challenge"];
-  if (mode === "subscribe" && token && token === config.whatsappVerifyToken) return res.status(200).send(challenge);
-  return res.sendStatus(403);
-});
-
-app.post("/webhooks/whatsapp", express.raw({ type: "application/json", limit: "2mb" }), async (req, res) => {
-  const rawBody = req.body;
-  if (config.nodeEnv === "production" && !config.whatsappAppSecret) return res.sendStatus(503);
-  if (config.whatsappAppSecret && !verifyWhatsAppSignature(rawBody, req.get("x-hub-signature-256"), config.whatsappAppSecret)) return res.sendStatus(401);
-  let payload;
-  try { payload = JSON.parse(rawBody.toString("utf8")); }
-  catch { return res.sendStatus(400); }
-  res.sendStatus(200);
-  try { await secretary.handleWebhook(payload); }
-  catch (error) { console.error("Error procesando webhook:", error); }
-});
-
-app.use(express.json({ limit: "1mb" }));
 app.use((error, _req, res, _next) => {
   console.error("Error HTTP:", error);
   res.status(500).json({ error: "internal_error" });
