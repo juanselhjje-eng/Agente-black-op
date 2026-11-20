@@ -12,7 +12,17 @@ export function createPostgresStore({ connectionString, pool, max = 10 }) {
         ca: readFileSync(process.env.PGSSL_CA_PATH || "./supabase-ca.crt", "utf8")
       }
     : undefined;
-  const db = pool || new Pool({ connectionString, max, ssl });
+  // node-postgres lets SSL query parameters in the URL override the explicit
+  // TLS options (including the supplied CA). Remove sslmode when using our
+  // verified CA configuration so certificate validation uses this SSL object.
+  const normalizedConnectionString = process.env.PGSSL === "true"
+    ? (() => {
+        const url = new URL(connectionString);
+        url.searchParams.delete("sslmode");
+        return url.toString();
+      })()
+    : connectionString;
+  const db = pool || new Pool({ connectionString: normalizedConnectionString, max, ssl });
   let initPromise;
   const schema = `
     CREATE TABLE IF NOT EXISTS blackops_messages (
