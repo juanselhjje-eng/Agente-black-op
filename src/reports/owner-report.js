@@ -35,7 +35,7 @@ export function getReportRange(period = "daily", now = new Date(), timeZone = "A
 }
 export async function buildOwnerReport(store, { period = "daily", now = new Date(), timeZone = "America/Bogota" } = {}) {
   const range = getReportRange(period, now, timeZone);
-  const m = await store.getOperationalMetrics(range.start, range.end);
+  const m = await store.getOperationalMetrics(range.start, range.end);\n  const adminSnapshot = store.getAdminSnapshot ? await store.getAdminSnapshot(range) : null;
   const uptime = m.websiteChecks ? Math.round(((m.websiteChecks - m.websiteFailures) / m.websiteChecks) * 1000) / 10 : null;
   const lines = [
     `REPORTE OPERATIVO BLACK OPS — ${range.label}`, "",
