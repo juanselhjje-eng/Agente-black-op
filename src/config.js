@@ -10,6 +10,7 @@ export const config = Object.freeze({
   databaseUrl: process.env.DATABASE_URL || "",
   pgPoolMax: Math.max(1, Math.min(30, number(process.env.PG_POOL_MAX, 10))),
   geminiApiKey: process.env.GEMINI_API_KEY || "",
+  geminiApiKeyBackup: process.env.GEMINI_API_KEY_BACKUP || "",
   geminiModel: process.env.GEMINI_MODEL || "gemini-2.5-flash",
   whatsappVerifyToken: process.env.WHATSAPP_VERIFY_TOKEN || "",
   whatsappAccessToken: process.env.WHATSAPP_ACCESS_TOKEN || "",
