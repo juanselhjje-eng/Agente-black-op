@@ -16,7 +16,8 @@ No confirmar pagos sin verificación. No inventar dirección, edad mínima, pol�
 La API pública documentada solo permite consultar configuración y disponibilidad; no crear, cambiar ni cancelar reservas. Lesiones, emergencias y quejas graves requieren atención humana inmediata.`;
 
 export function createSubagents(config, { store } = {}) {
-  const ai = config.geminiApiKey ? new GoogleGenAI({ apiKey: config.geminiApiKey }) : null;
+  const apiKeys = [...new Set([config.geminiApiKey, config.geminiApiKeyBackup].filter(Boolean))];
+  const ai = apiKeys.length ? apiKeys.map((apiKey) => new GoogleGenAI({ apiKey })) : null;
   const researcher = createWebResearcher({ ai, model: config.geminiModel });
   const adminAnalyst = createAdminAnalyst();
   const generalAuditor = createGeneralAuditor({ store });
