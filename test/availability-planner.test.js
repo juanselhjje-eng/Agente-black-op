@@ -54,3 +54,19 @@ test("no interpreta mapas no vacíos de disponibilidad cuyo formato no conoce", 
   assert.equal(result.status, "unverified");
   assert.equal(result.slots.length, 0);
 });
+
+test("omite horarios que ya pasaron hoy según el reloj de la API", () => {
+  const result = planPublicAvailability({
+    from: "2026-11-20",
+    publicAvailability: {
+      today: "2026-11-20",
+      nowMinute: 759,
+      busy: {},
+      disabled: [],
+      blocked: {}
+    }
+  });
+  assert.equal(result.status, "verified_against_public_blocks");
+  assert.equal(result.slots[0].time, "13:00");
+  assert.ok(result.slots.every(slot => slot.time > "12:39"));
+});
