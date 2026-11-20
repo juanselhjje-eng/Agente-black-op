@@ -30,6 +30,13 @@ Los estados `verified`, `paid` y `approved` exigen `verifiedAt`; el estado `refu
 
 Campos requeridos: `sku`, `name`, `quantity` y `minimum`. Cantidades y mínimos son enteros no negativos. El SKU identifica el artículo; repetirlo actualiza su existencia y mínimo.
 
+## Consultas administrativas
+
+- `GET /admin/v1/snapshot`: devuelve los registros de reservas, pagos e inventario. Admite `start` y `end` como parámetros ISO para filtrar reservas y pagos por fecha de creación.
+- `GET /admin/v1/summary`: devuelve el resumen calculado por el analista administrativo. Admite los mismos parámetros y usa la misma clave de autenticación.
+
+Ambas consultas requieren `x-admin-api-key`; no exponen datos sin autenticación.
+
 ## Ejemplo de llamada
 
 No guardes la clave en el código fuente. En CMD, define la variable en la sesión segura y úsala en la cabecera:
