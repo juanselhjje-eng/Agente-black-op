@@ -186,6 +186,32 @@ export function createPostgresStore({ connectionString, pool, max = 10 }) {
       const r = await query("SELECT data FROM blackops_website_checks ORDER BY checked_at DESC,id DESC LIMIT $1", [Math.max(1,Math.min(100,limit))]);
       return r.rows.map(row => row.data).reverse();
     },
+    async getAdminSnapshot({ start, end } = {}) {
+      const [reservations, payments, inventory] = await Promise.all([
+        query(`SELECT status, total_cop, created_at FROM public.blackops_business_reservations
+          WHERE ($1::timestamptz IS NULL OR created_at >= $1)
+            AND ($2::timestamptz IS NULL OR created_at < $2)
+          ORDER BY created_at DESC LIMIT 10000`, [start || null, end || null]),
+        query(`SELECT status, amount_cop, verified_at, refunded_at, created_at
+          FROM public.blackops_business_payments
+          WHERE ($1::timestamptz IS NULL OR created_at >= $1)
+            AND ($2::timestamptz IS NULL OR created_at < $2)
+          ORDER BY created_at DESC LIMIT 10000`, [start || null, end || null]),
+        query(`SELECT sku, name, quantity, minimum FROM public.blackops_business_inventory ORDER BY name LIMIT 5000`)
+      ]);
+      return {
+        source: "supabase-postgresql",
+        asOf: new Date().toISOString(),
+        reservations: reservations.rows.map(row => ({ status: row.status, totalCop: Number(row.total_cop), createdAt: row.created_at })),
+        payments: payments.rows.map(row => ({
+          status: row.status, amountCop: Number(row.amount_cop),
+          verifiedAt: row.verified_at, refundedAt: row.refunded_at, createdAt: row.created_at
+        })),
+        inventory: inventory.rows.map(row => ({
+          sku: row.sku, name: row.name, quantity: row.quantity, minimum: row.minimum
+        }))
+      };
+    },
     async getOperationalMetrics(start, end) {
       const r = await query(`
         SELECT
